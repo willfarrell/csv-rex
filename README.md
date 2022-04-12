@@ -9,8 +9,8 @@
 
 
 ## Features
-- Comma-Separated Values (CSV) Files Spec Compliant ([RFC-4180](https://tools.ietf.org/html/rfc4180))
-- ESM
+- Comma-Separated Values (CSV) Files specification compliant ([RFC-4180](https://tools.ietf.org/html/rfc4180))
+- Supports: ESM, <TODO more>
 - Zero dependencies
 - Small bundle size (<?KB)
 
@@ -19,7 +19,7 @@
 Both are great libraries, we've use them both in many projects. 
 
 - [`csv-parse`](https://csv.js.org/parse/): Built on to of NodeJS native APIs giving it great stream support. If you wan to run it in the browser however, you've going to have to ship a very large polyfill.
-- [`papaparse`](https://www.papaparse.com/): Built to be more friendly for browser with an option to run in node as well. Faster than `csv-parse`, but, it's dadbod and lack of stream support leaves room for improvement.
+- [`papaparse`](https://www.papaparse.com/): Built to be more friendly for browser with an option to run in node as well. Faster than `csv-parse`, but, it's dadbod and lack of native stream support leaves room for improvement.
 
 The goal with `csv-rex` was to have a csv parser that is as fast as others, reduce bundle size, and have full stream support. We think we've achieved our goal with up to **??% faster** benchmarks, **<?KB** compressed bundle, with an options for manual chunking, Web Stream API, and `node:stream`.
 
@@ -236,7 +236,7 @@ import { parser } from 'csv-rex'
 
 export default async (filePath, opts = {}) => {
   const readStream = createReadStream(filePath)
-  //const textDecodeStream = new TextDecoderStream(opts.encoding)
+  
   const writeStream = new Writable({
     async write ({data, idx, err}) {
       if (err) {
@@ -248,7 +248,7 @@ export default async (filePath, opts = {}) => {
   })
   
   return readStream
-    //.pipe(textDecodeStream)
+    //.pipe(textDecodeStream) // TODO
     .pipe(csvParseStream(opts))
     .pipe(writeStream)
     
@@ -257,7 +257,7 @@ export default async (filePath, opts = {}) => {
 const csvParseStream = (opts) => {
   const { canUseFastMode, fastParse, slowParse, previousChunk } = parser(opts)
 
-  return new TransformStream({
+  return new Transform({
     transform (chunk, controller) {
       chunk = previousChunk() + chunk
 
