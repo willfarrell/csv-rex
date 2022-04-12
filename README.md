@@ -1,5 +1,7 @@
-<svg viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg"><text x="312" y="152" font-size="16px">🦖</text></svg>
 <div align="center">
+<br/><br/><br/><br/><br/><br/><br/>
+🦖
+<br/><br/><br/><br/><br/><br/><br/>
 <h1>CSV-Rex</h1>
 <p>Don't let it's small hands fool you ...</p>
 <p>A tiny and fast CSV parser for JavaScript.</p>
