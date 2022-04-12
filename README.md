@@ -3,15 +3,16 @@
 🦖
 <br/><br/><br/><br/><br/><br/><br/>
 <h1>CSV-Rex</h1>
-<p>Don't let it's small hands fool you ...</p>
 <p>A tiny and fast CSV parser for JavaScript.</p>
+<p>Don't let it's small hands fool you ...</p>
 </div>
 
 
 ## Features
-- [RFC-4180](https://tools.ietf.org/html/rfc4180) Compliant
-- ESM & Tree shaking
+- Comma-Separated Values (CSV) Files Spec Compliant ([RFC-4180](https://tools.ietf.org/html/rfc4180))
+- ESM
 - Zero dependencies
+- Small bundle size (<?KB)
 
 
 ## Why not use `papaparse` or `csv-parse`?
@@ -20,7 +21,7 @@ Both are great libraries, we've use them both in many projects.
 - [`csv-parse`](https://csv.js.org/parse/): Built on to of NodeJS native APIs giving it great stream support. If you wan to run it in the browser however, you've going to have to ship a very large polyfill.
 - [`papaparse`](https://www.papaparse.com/): Built to be more friendly for browser with an option to run in node as well. Faster than `csv-parse`, but, it's dadbod and lack of stream support leaves room for improvement.
 
-The goal with `csv-rex` was to have a csv parser that is as fast as others, reduce bundle size, and have full stream support. We think we've achieved our goal with up to **30% faster** benchmarks, **<1KB** compressed bundle, with an options for manual chunking, Web Stream API, and `node:stream`.
+The goal with `csv-rex` was to have a csv parser that is as fast as others, reduce bundle size, and have full stream support. We think we've achieved our goal with up to **??% faster** benchmarks, **<?KB** compressed bundle, with an options for manual chunking, Web Stream API, and `node:stream`.
 
 
 ## Setup
@@ -44,16 +45,8 @@ await parseStream(input, options)
 
 ## Options
 ### Source
-- `source` (`file`): `input` type.
-  - `file`: `input` is a blob or file from a form
-  - `string`: `input` is a string containing the CSV contents
-  - `fetch`: `input` is a URL to a CSV
 - `chunkSize` (`10MB`): Size of chunks to process at once. Should be greater than the size of the 3 largest lines.
 - encoding (`utf-8`): `input` charset encoding
-
-### Progress
-- `progressIntervalInMs` (`100`): The minimum interval between progress updates. Triggered before every chunk.
-- `onProgress` (`({percent, positionInBytes, totalInBytes}) => {}`): Function to run when eligible to notify.
 
 ### CSV Parse
 - `fastMode` (`true`): Option to allow a faster parsing strategy when `quoteChar` is not present in a chunk.
@@ -62,43 +55,237 @@ await parseStream(input, options)
   - `[...]`: Pre-assign headers because `input` contains no headers.
   - `false`: Don't map to JSON, return array of values instead.
 - `newlineValue` (`undefined`): What `newline` characters to be used
-  - `undefined`: Will auto-detect using the first chunk.
   - `\n`: Most common value to be used in CSV
   - `\r\n`: Common in Windows generated CSV files
-- `commentPrefixValue` (`#`): Lines starting with this value will be ignored. Can be set to `false` if files will never have comments.
-- `delimiterChar` (`,`): Character used to separate fields
+- `delimiterValue` (`,`): Characters used to separate fields
 - `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them
 - `escapeChar` (`"`): Character used to escape the `quoteChar`.
-- `emptyFieldValue` (``): Value to be used instead of an empty string. Can be set to `undefined` to have empty fields not be included.
+- `commentPrefixValue` (false): Lines starting with this value will be ignored (i.e. `#`, `//`). Can be set to `false` if files will never have comments.
+- `emptyFieldValue` (`<empty string>`): Value to be used instead of an empty string. Can be set to `undefined` to have empty fields not be included.
+- `coerceField` (`(field) => field`): Function to apply type/value coercion.
 - `onRowParse` (`({data, idx, err}) => {}`): Function to run on parsed row data.
 
 ### TODO
-- `coerceField` (`(field) => {}`): Function to apply type/value coercion.
-- `coerceRow` (`(row) => {}`): Function to apply type/value coercion to a row.
+
 - `errorOnEmptyLine` (`false`): When an empty line is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnComment` (`false`): When a comment is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnFieldMalformed` (`false`): When no closing `quoteChar` is found. Push row with error when occurs, row ignored otherwise.
 - `errorOnFieldsMismatch` (`false`): When number of headers does not match the number of fields in a row. Push row with error when occurs, row ignored otherwise.
 
 ## Examples
-### WebWorker
-To prevent blocking of the main thread it is recommended that csv parsing is done in a WebWorker, SharedWebWorker, or ServiceWorker.
+### Basic parsing of a string
+```javascript
+import parse from 'csv-rex'
 
-#### Simple
+const onRowParse = ({data, idx, err}) => {
+  if (err) {
+    // handler err
+    return
+  }
+  // handle data
+}
+
+export default async (csvString) => {
+  const blob = new Blob([csvString], { type: 'text/plain' })
+  const options = {onRowParse}
+  await parse(blob, options)
+}
+
+  
+```
+
+## WebWorker using a file
+To prevent blocking of the main thread it is recommended that csv parsing is done in a WebWorker, SharedWebWorker, or ServiceWorker instead of the main thread.
+
+```javascript
+/* eslint-env worker */
+import parse from 'csv-rex'
+
+const onRowParse = ({data, idx, err}) => {
+  if (err) {
+    // handler err
+    return
+  }
+  // handle data
+}
+
+onmessage = async (event) => {
+  const { file } = event.data
+  const options = {onRowParse}
+  await parse(file, options)
+  
+  postMessageEncode({percent:100})
+}
+
+const postMessageEncode = (str) => {
+  if (typeof str !== 'string') str = JSON.stringify(str)
+  const buffer = new TextEncoder().encode(str).buffer
+  postMessage(buffer, [buffer])
+}
+```
+
+
+### Browser Web Stream API
+Requires: Chrome v71 , Edge v79, Firefox ([not supported yet](https://bugzilla.mozilla.org/show_bug.cgi?id=1493537)), Safari v14.5
+
+```javascript
+import { parser } from 'csv-rex'
+
+export default async (blob, opts = {}) => {
+  const textDecodeStream = new TextDecoderStream(opts.encoding)
+  const writeStream = new WritableStream({
+    async write ({data, idx, err}) {
+      if (err) {
+        // handler err
+        return
+      }   
+      // handle data
+    }
+  })
+  
+  return blob.stream()
+    .pipeThrough(textDecodeStream)
+    .pipeThrough(csvParseStream(opts))
+    .pipeTo(writeStream)
+    
+}
+
+const csvParseStream = (opts) => {
+  const { canUseFastMode, fastParse, slowParse, previousChunk } = parser(opts)
+
+  return new TransformStream({
+    transform (chunk, controller) {
+      chunk = previousChunk() + chunk
+
+      if (canUseFastMode(chunk)) {
+        fastParse(chunk, controller)
+      } else {
+        slowParse(chunk, controller)
+      }
+    },
+    flush (controller) {
+      const chunk = previousChunk()
+      if (canUseFastMode(chunk)) {
+        fastParse(chunk, controller)
+      } else {
+        slowParse(chunk, controller)
+      }
+    }
+  })
+}
+
+```
+
+
+### NodeJS Web Stream API
+Requires: v16.6
+```javascript
+import { TextDecoderStream, TransformStream, WritableStream } from 'node:stream/web'
+import { parser } from 'csv-rex'
+
+export default async (blob, opts = {}) => {
+  const textDecodeStream = new TextDecoderStream(opts.encoding)
+  const writeStream = new WritableStream({
+    async write ({data, idx, err}) {
+      if (err) {
+        // handler err
+        return
+      }   
+      // handle data
+    }
+  })
+  
+  return blob.stream()
+    .pipeThrough(textDecodeStream)
+    .pipeThrough(csvParseStream(opts))
+    .pipeTo(writeStream)
+    
+}
+
+const csvParseStream = (opts) => {
+  const { canUseFastMode, fastParse, slowParse, previousChunk } = parser(opts)
+
+  return new TransformStream({
+    transform (chunk, controller) {
+      chunk = previousChunk() + chunk
+
+      if (canUseFastMode(chunk)) {
+        fastParse(chunk, controller)
+      } else {
+        slowParse(chunk, controller)
+      }
+    },
+    flush (controller) {
+      const chunk = previousChunk()
+      if (canUseFastMode(chunk)) {
+        fastParse(chunk, controller)
+      } else {
+        slowParse(chunk, controller)
+      }
+    }
+  })
+}
+```
+
+
+### NodeJS Stream
+```javascript
+import { createReadStream } from 'node:fs'
+import { Transform, Writable } from 'node:stream'
+import { parser } from 'csv-rex'
+
+export default async (filePath, opts = {}) => {
+  const readStream = createReadStream(filePath)
+  //const textDecodeStream = new TextDecoderStream(opts.encoding)
+  const writeStream = new Writable({
+    async write ({data, idx, err}) {
+      if (err) {
+        // handler err
+        return
+      }   
+      // handle data
+    }
+  })
+  
+  return readStream
+    //.pipe(textDecodeStream)
+    .pipe(csvParseStream(opts))
+    .pipe(writeStream)
+    
+}
+
+const csvParseStream = (opts) => {
+  const { canUseFastMode, fastParse, slowParse, previousChunk } = parser(opts)
+
+  return new TransformStream({
+    transform (chunk, controller) {
+      chunk = previousChunk() + chunk
+
+      if (canUseFastMode(chunk)) {
+        fastParse(chunk, controller)
+      } else {
+        slowParse(chunk, controller)
+      }
+    },
+    flush (controller) {
+      const chunk = previousChunk()
+      if (canUseFastMode(chunk)) {
+        fastParse(chunk, controller)
+      } else {
+        slowParse(chunk, controller)
+      }
+    }
+  })
+}
+
+```
+
+### Example coerceField
 ```javascript
 
 
 ```
 
-#### Advanced
-```javascript
 
 
-```
-
-
-
-### NodeJS
-
-## Benchmarks
 
