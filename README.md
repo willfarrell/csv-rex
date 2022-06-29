@@ -38,7 +38,7 @@
 - Comma-Separated Values (CSV) Files specification compliant ([RFC-4180](https://tools.ietf.org/html/rfc4180))
 - Small bundle size (0.5KB - 1KB compressed)
 - Zero dependencies
-- ESM & CJS modules
+- ESM & CJS modules with `.map` files
 - NodeJS and WebStream API support via @datastream/csv
 - Tested up to 10M rows
 
