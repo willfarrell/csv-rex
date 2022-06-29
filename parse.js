@@ -317,7 +317,7 @@ export default (input, opts) => {
   let position = 0
   while (position < input.length) {
     const chunk = previousChunk() + input.slice(position, position + chunkSize)
-    console.log({ chunk, chunkSize })
+
     if (canUseFastMode(chunk)) {
       fastParse(chunk, controller)
     } else {
@@ -326,12 +326,12 @@ export default (input, opts) => {
     position += chunkSize
   }
   // flush
-  /* const chunk = previousChunk()
+  const chunk = previousChunk()
   if (canUseFastMode(chunk)) {
     fastParse(chunk, controller)
   } else {
     slowParse(chunk, controller)
-  } */
+  }
 
   return enableReturn && res
 }
