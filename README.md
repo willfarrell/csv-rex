@@ -26,8 +26,8 @@
   <a href="https://github.com/willfarrell/csv-rex/actions/workflows/sast.yml">
     <img src="https://github.com/willfarrell/csv-rex/actions/workflows/sast.yml/badge.svg?branch=main&event=push" alt="SAST" style="max-width:100%;">
   </a>
-  <a href="https://bestpractices.coreinfrastructure.org/projects/5280">
-    <img src="https://bestpractices.coreinfrastructure.org/projects/5280/badge" alt="Core Infrastructure Initiative (CII) Best Practices"  style="max-width:100%;">
+  <a href="https://bestpractices.coreinfrastructure.org/projects/6208">
+    <img src="https://bestpractices.coreinfrastructure.org/projects/6208/badge" alt="Core Infrastructure Initiative (CII) Best Practices"  style="max-width:100%;">
   </a>
 </p>
 </div>

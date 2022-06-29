@@ -1,5 +1,6 @@
 *.cjs
 *.mjs
+*.mjs.map
 coverage
 
 # Logs
