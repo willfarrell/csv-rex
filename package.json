@@ -5,10 +5,13 @@
   "type": "module",
   "files": [
     "index.mjs",
+    "index.mjs.map",
     "index.cjs",
     "parse.mjs",
+    "parse.mjs.map",
     "parse.cjs",
     "format.mjs",
+    "format.mjs.map",
     "format.cjs"
   ],
   "main": "index.mjs",
