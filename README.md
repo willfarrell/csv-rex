@@ -3,8 +3,9 @@
 🦖
 <br/><br/><br/><br/><br/><br/><br/>
 <h1>CSV-Rex</h1>
-<p>A tiny and fast CSV parser & formater for JavaScript.</p>
-<p>Don't let it's small hands fool you ...</p>
+<p>A tiny and fast CSV parser & formatter for JavaScript.</p>
+<p>It's small hands are a feature.</p>
+<br />
 <p>
   <a href="https://www.npmjs.com/package/csv-rex?activeTab=versions">
     <img src="https://badge.fury.io/js/csv-rex.svg" alt="npm version" style="max-width:100%;">
