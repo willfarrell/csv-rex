@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+echo "CJS"
+node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs index.js           --minify --allow-overwrite --outfile=index.cjs
+node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs parse.js  --bundle --minify --allow-overwrite --outfile=parse.cjs
+node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs format.js --bundle --minify --allow-overwrite --outfile=format.cjs
+
+echo "MJS"
+node_modules/.bin/esbuild --platform=node                 --format=esm index.js           --minify --allow-overwrite --outfile=index.mjs
+node_modules/.bin/esbuild --platform=node                 --format=esm parse.js  --bundle --minify --allow-overwrite --outfile=parse.mjs
+node_modules/.bin/esbuild --platform=node                 --format=esm format.js --bundle --minify --allow-overwrite --outfile=format.mjs
+
