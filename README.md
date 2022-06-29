@@ -22,8 +22,8 @@
   <a href="https://snyk.io/test/github/willfarrell/csv-rex">
     <img src="https://snyk.io/test/github/willfarrell/csv-rex/badge.svg" alt="Known Vulnerabilities" data-canonical-src="https://snyk.io/test/github/willfarrell/csv-rex" style="max-width:100%;">
   </a>
-  <a href="https://lgtm.com/projects/g/willfarrell/csv-rex/context:javascript">
-    <img src="https://img.shields.io/lgtm/grade/javascript/g/willfarrell/csv-rex.svg?logo=lgtm&logoWidth=18" alt="Language grade: JavaScript" style="max-width:100%;">
+  <a href="https://github.com/willfarrell/csv-rex/actions/workflows/sast.yml">
+    <img src="https://github.com/willfarrell/csv-rex/actions/workflows/sast.yml/badge.svg?branch=main&event=push" alt="SAST" style="max-width:100%;">
   </a>
   <a href="https://bestpractices.coreinfrastructure.org/projects/5280">
     <img src="https://bestpractices.coreinfrastructure.org/projects/5280/badge" alt="Core Infrastructure Initiative (CII) Best Practices"  style="max-width:100%;">
