@@ -153,10 +153,6 @@ export const parse = (opts = {}) => {
     if (cursor === nextNewlineChar) {
       idx += 1
       cursor += newlineCharLength
-      // `cursor === chunkLength` to ignore end of file `\n`
-      if (cursor === chunkLength) {
-        return
-      }
       if (errorOnEmptyLine) {
         enqueueError('EmptyLineExists', 'Empty line detected.')
       }
@@ -321,6 +317,7 @@ export default (input, opts) => {
   let position = 0
   while (position < input.length) {
     const chunk = previousChunk() + input.slice(position, position + chunkSize)
+    console.log({ chunk, chunkSize })
     if (canUseFastMode(chunk)) {
       fastParse(chunk, controller)
     } else {
@@ -328,12 +325,13 @@ export default (input, opts) => {
     }
     position += chunkSize
   }
-  const chunk = previousChunk()
+  // flush
+  /* const chunk = previousChunk()
   if (canUseFastMode(chunk)) {
     fastParse(chunk, controller)
   } else {
     slowParse(chunk, controller)
-  }
+  } */
 
   return enableReturn && res
 }

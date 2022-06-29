@@ -6,22 +6,30 @@ import csvParse, { parse } from './parse.js'
 // *** Default Export *** //
 test('Should parse csv string', async (t) => {
   const options = {
-    enqueue: sinon.spy()
+    enqueue: sinon.spy(),
+    chunkSize: 12
   }
-  const input = 'a,b,c\n1,2,3\n'
+  const input = 'a,b,c\n1,2,3\n4,5,6\n'
   const res = csvParse(input, options)
-  deepEqual(res, [{ a: '1', b: '2', c: '3' }])
-  equal(options.enqueue.callCount, 1) // includes ending emptyline
+  deepEqual(res, [
+    { a: '1', b: '2', c: '3' },
+    { a: '4', b: '5', c: '6' }
+  ])
+  equal(options.enqueue.callCount, 2)
 })
 
 test('Should parse csv string w/ quotes', async (t) => {
   const options = {
-    enqueue: sinon.spy()
+    enqueue: sinon.spy(),
+    chunkSize: 14
   }
-  const input = 'a,b,c\n1,"2",3\n'
+  const input = 'a,b,c\n1,"2",3\n4,"5",6\n'
   const res = csvParse(input, options)
-  deepEqual(res, [{ a: '1', b: '2', c: '3' }])
-  equal(options.enqueue.callCount, 1) // includes ending emptyline
+  deepEqual(res, [
+    { a: '1', b: '2', c: '3' },
+    { a: '4', b: '5', c: '6' }
+  ])
+  equal(options.enqueue.callCount, 2)
 })
 
 // *** General *** //
