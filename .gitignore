@@ -2,6 +2,8 @@
 *.mjs
 *.mjs.map
 coverage
+*.0x
+*.br
 
 # Logs
 logs
