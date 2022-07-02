@@ -39,6 +39,9 @@ export const parse = (opts = {}) => {
     errorOnFieldsMismatch
     // errorOnFieldMalformed
   } = options
+  // const delimiterCharRegExp = /,|\t|\||;|\x1E|\x1F/g
+  // const newlineCharRegExp = /\r\n|\n|\r/g
+
   const escapedQuoteChar = escapeChar + quoteChar
   const escapedQuoteCharRegExp = new RegExp(
     `${escapeRegExp(escapedQuoteChar)}`,
@@ -170,6 +173,18 @@ export const parse = (opts = {}) => {
     partialLine = ''
     cursor = 0
     row = []
+
+    // TODO add in tests, update defaults, replice to fastParse
+    // auto-detect newlineChar
+    //  if (!newlineChar) {
+    //    const match = newlineCharRegExp.exec(chunk)
+    //    newlineChar = match[0]
+    //  }
+    // auto-detect delimitryChar
+    //  if (!delimiterChar) {
+    //    const match = delimiterCharRegExp.exec(chunk)
+    //    delimiterChar = match[0]
+    //  }
 
     checkForEmptyLine()
     let lineStart = 0

@@ -60,22 +60,12 @@ npm install csv-rex
 ```javascript
 import {parse, format} from 'csv-rex'
 
-const lines = []
-await parse(inputString, {
-  enqueue: (({idx, data, err}) => {
-    lines.push(data)
-  } 
-})
-let csv
-await format(inputString, {
-  enqueue: ((data) => {
-    csv += data
-  } 
-})
+const linesArray = parse(inputString, {})
+
+const csv = format(linesArray, {})
 ```
 
 ## Options
-Defaults are set to for performance and RFC-4180 compliance.
 
 ### Common
 - `header` (`true`): Keys to be used in JSON object for the parsed row
