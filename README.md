@@ -4,7 +4,6 @@
 <br/><br/><br/><br/><br/><br/><br/>
 <h1>CSV-Rex</h1>
 <p>A tiny and fast CSV parser & formatter for JavaScript.</p>
-<p>It's small hands are a feature.</p>
 <br />
 <p>
   <a href="https://www.npmjs.com/package/csv-rex?activeTab=versions">
@@ -36,7 +35,7 @@
 ## Features
 - Free to use under MIT licence
 - Comma-Separated Values (CSV) Files specification compliant ([RFC-4180](https://tools.ietf.org/html/rfc4180))
-- Small bundle size (0.5KB - 1KB compressed)
+- Small bundle size (~1KB compressed)
 - Zero dependencies
 - ESM & CJS modules with `.map` files
 - NodeJS and WebStream API support via @datastream/csv
@@ -83,18 +82,17 @@ Defaults are set to for performance and RFC-4180 compliance.
   - `true`: First row of the `input` is the headers and will need to be pulled out
   - `[...]`: Pre-assign headers because `input` contains no headers.
   - `false`: Don't map to JSON, return array of values instead.
-- `newlineChar` (`\n`): What `newline` character(s) to be used.
-- `delimiterChar` (`,`): Characters used to separate fields
+- `newlineChar` (`\r\n`): What `newline` character(s) to be used.
+- `delimiterChar` (`,`): Characters used to separate fields. Must be length of 1
 - `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them. Must be length of 1
 - `escapeChar` (`quoteChar`): Character used to escape the `quoteChar`. Must be length of 1
 
 ### Parse
 - `enqueue` (`({data, idx, err}) => {}`): Function to run on parsed row data.
 - `chunkSize` (`10MB`): Size of chunks to process at once. Should be greater than the size of the 3 largest lines.
-- `fastMode` (`true`): Option to allow a faster parsing strategy when `quoteChar` is not present in a chunk.
-- `commentPrefixValue` (false): Lines starting with this value will be ignored (i.e. `#`, `//`). Can be set to `false` if files will never have comments.
 - `emptyFieldValue` (`<empty string>`): Value to be used instead of an empty string. Can be set to `undefined` to have empty fields not be included.
 - `coerceField` (`(field) => field`): Function to apply type/value coercion.
+- `commentPrefixValue` (false): Lines starting with this value will be ignored (i.e. `#`, `//`). Can be set to `false` if files will never have comments.
 - `errorOnEmptyLine` (`true`): When an empty line is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnComment` (`true`): When a comment is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnFieldsMismatch` (`true`): When number of headers does not match the number of fields in a row. Push row with error when occurs, row ignored otherwise.
@@ -274,4 +272,4 @@ export const csvParseStream = (opts) => {
 - [ ] Automate and publish benchmarks
 - [ ] option functionality
   - validate options
-  - autodetect options
+  - autodetect options (newline/delimiter)

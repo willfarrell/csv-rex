@@ -1,13 +1,12 @@
 // chunkSize >> largest expected row
 const defaultOptions = {
   header: true, // false: return array; true: detect headers and return json; [...]: use defined headers and return json
-  newlineChar: '\n', // undefined: detect newline from file; '\r\n': Windows; '\n': Linux/Mac
+  newlineChar: '\r\n', // undefined: detect newline from file; '\r\n': Windows; '\n': Linux/Mac
   delimiterChar: ',',
   quoteChar: '"',
   // escapeChar: '"', // default: `quoteChar`
 
   // Parse
-  // fastMode: true,
   emptyFieldValue: '',
   coerceField: (field) => field, // TODO tests
   commentPrefixValue: false, // falsy: disable, '//': enabled
@@ -18,6 +17,7 @@ const defaultOptions = {
 }
 
 const length = (value) => value.length
+const escapeRegExp = (string) => string.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&') // https://github.com/tc39/proposal-regex-escaping
 
 export const parse = (opts = {}) => {
   const options = { ...defaultOptions, ...opts }
@@ -25,7 +25,6 @@ export const parse = (opts = {}) => {
 
   let { header } = options
   let headerLength = length(header)
-  let headerShortLength = headerLength - 1
 
   const {
     newlineChar,
@@ -40,17 +39,21 @@ export const parse = (opts = {}) => {
     errorOnFieldsMismatch
     // errorOnFieldMalformed
   } = options
-  // const escapedQuoteChar = escapeChar + quoteChar
+  const escapedQuoteChar = escapeChar + quoteChar
+  const escapedQuoteCharRegExp = new RegExp(
+    `${escapeRegExp(escapedQuoteChar)}`,
+    'g'
+  )
 
   const escapedQuoteEqual = escapeChar === quoteChar
   const escapedQuoteNotEqual = escapeChar !== quoteChar
 
   const newlineCharLength = length(newlineChar)
-  const delimiterCharLength = length(delimiterChar)
+  const delimiterCharLength = 1 // length(delimiterChar)
   const quoteCharLength = 1 // length(quoteChar)
   const escapeCharLength = 1 // length(escapeChar)
   const escapedQuoteCharLength = 2 // length(escapedQuoteChar)
-  const commentPrefixValueLength = length(commentPrefixValue)
+  // const commentPrefixValueLength = length(commentPrefixValue)
 
   let chunk, chunkLength, cursor, row, enqueue
   let partialLine = ''
@@ -60,7 +63,6 @@ export const parse = (opts = {}) => {
     if (header === true) {
       header = row
       headerLength = length(header)
-      headerShortLength = headerLength - 1
       return
     }
     let data = row
@@ -84,7 +86,6 @@ export const parse = (opts = {}) => {
         }
         return
       } else {
-        // slow compared to returning just row
         data = {}
         for (let i = 0; i < rowLength; i++) {
           data[header[i]] = row[i]
@@ -162,24 +163,21 @@ export const parse = (opts = {}) => {
     }
   }
 
-  const slowParse = (string, controller) => {
+  const slowParse = (string, controller, flush = false) => {
     chunk = string
     chunkLength = length(chunk)
     enqueue = controller.enqueue
+    partialLine = ''
     cursor = 0
     row = []
 
-    // flush
-    const lastNewlineChar = chunk.lastIndexOf(newlineChar)
-    if (chunkLength !== lastNewlineChar && lastNewlineChar > -1) {
-      partialLine = chunk.substring(lastNewlineChar + newlineCharLength)
-      chunk = parseField(lastNewlineChar + newlineCharLength)
-    }
-
     checkForEmptyLine()
-
+    let lineStart = 0
     for (;;) {
-      let quoted, nextCursor, nextCursorLength, atNewline
+      let quoted
+      let nextCursor = cursor
+      let nextCursorLength
+      let atNewline
       if (chunk[cursor] === quoteChar) {
         cursor += quoteCharLength
         quoted = true
@@ -187,7 +185,11 @@ export const parse = (opts = {}) => {
         for (;;) {
           nextCursor = findNext(quoteChar, nextCursor)
           if (nextCursor < 0) {
-            throw new Error('QuotedFieldMalformed', { cause: idx })
+            partialLine = chunk.substring(lineStart, chunkLength) + partialLine
+            if (flush) {
+              throw new Error('QuotedFieldMalformed', { cause: idx })
+            }
+            return
           }
           if (
             escapedQuoteEqual &&
@@ -207,35 +209,39 @@ export const parse = (opts = {}) => {
         }
       }
 
-      const rowLength = length(row)
-      if (rowLength < headerShortLength) {
-        nextCursor = findNext(delimiterChar)
-        nextCursorLength = delimiterCharLength
-      } else if (rowLength < headerLength) {
-        nextCursor = findNext(newlineChar)
-        nextCursorLength = newlineCharLength
-        if (nextCursor < 0) nextCursor = chunkLength
-        atNewline = true
-      } else {
-        // fallback
-        const nextDelimiterChar = findNext(delimiterChar)
-        let nextNewlineChar = findNext(newlineChar)
-        if (nextNewlineChar < 0) nextNewlineChar = chunkLength
-        if (nextDelimiterChar > -1 && nextDelimiterChar < nextNewlineChar) {
-          nextCursor = nextDelimiterChar
-          nextCursorLength = delimiterCharLength
-        } else {
-          nextCursor = nextNewlineChar
-          nextCursorLength = newlineCharLength
-          atNewline = true
+      // fallback
+      const nextDelimiterChar = findNext(delimiterChar, nextCursor)
+      let nextNewlineChar = findNext(newlineChar, nextCursor)
+      if (nextNewlineChar < 0) {
+        if (!flush) {
+          partialLine = chunk.substring(lineStart, chunkLength) + partialLine
+          return
         }
+        nextNewlineChar = chunkLength
       }
-      if (nextCursor < 0) {
+      if (nextDelimiterChar > -1 && nextDelimiterChar < nextNewlineChar) {
+        nextCursor = nextDelimiterChar
+        nextCursorLength = delimiterCharLength
+      } else {
+        nextCursor = nextNewlineChar
+        nextCursorLength = newlineCharLength
+        atNewline = true
+      }
+
+      if (nextCursor < 0 || !nextCursor) {
         break
       }
 
-      const endOfField = quoted ? nextCursor - 1 : nextCursor
-      addFieldToRow(parseField(endOfField))
+      let field
+      if (quoted) {
+        field = parseField(nextCursor - 1).replace(
+          escapedQuoteCharRegExp,
+          quoteChar
+        )
+      } else {
+        field = parseField(nextCursor)
+      }
+      addFieldToRow(field)
 
       cursor = nextCursor + nextCursorLength
 
@@ -243,6 +249,7 @@ export const parse = (opts = {}) => {
         enqueueRow(row)
         row = []
         checkForEmptyLine()
+        lineStart = cursor
       }
       if (chunkLength <= cursor) {
         break
@@ -250,140 +257,9 @@ export const parse = (opts = {}) => {
     }
   }
 
-  // Test Parse
-  let nextDelimiterChar, nextNewlineChar
-
-  const endOfLine = () => {
-    enqueueRow(row)
-    row = []
-    cursor = nextNewlineChar + newlineCharLength
-    checkForEmptyLine()
-    nextNewlineChar = findNext(newlineChar)
-  }
-
-  const testParse = (string, controller) => {
-    chunk = string
-    chunkLength = length(chunk)
-    enqueue = controller.enqueue
-    cursor = 0
-    row = []
-
-    nextDelimiterChar = findNext(delimiterChar)
-    nextNewlineChar = findNext(newlineChar)
-
-    // flush
-    const lastNewlineChar = chunk.lastIndexOf(newlineChar)
-    if (chunkLength !== lastNewlineChar && lastNewlineChar > -1) {
-      partialLine = chunk.slice(lastNewlineChar + newlineCharLength)
-      chunk = chunk.slice(0, lastNewlineChar + newlineCharLength)
-    }
-
-    const endOfFile = nextNewlineChar < 0
-    if (endOfFile) {
-      nextNewlineChar = chunkLength
-    }
-
-    checkForEmptyLine()
-    for (;;) {
-      /* if (chunk[cursor] === quoteChar) {
-      let nextQuoteChar = cursor
-
-      cursor += quoteCharLength
-      for (;;) {
-      nextQuoteChar = findNext(quoteChar, nextQuoteChar + quoteCharLength)
-
-      if (nextQuoteChar < 0) {
-      if (endOfFile && errorOnFieldMalformed) {
-      throw new Error('QuotedFieldMalformed', { cause: idx })
-      }
-      // If there is an open quote that spans multiple chunks, should we catch it?
-      // performance.memory.usedJSHeapSize / window?.performance.memory.jsHeapSizeLimit
-      // process.memoryUsage()
-      break
-      }
-
-      if (
-      quoteChar === escapeChar &&
-      chunk[nextQuoteChar + quoteCharLength] === quoteChar
-      ) {
-      // quoteCharLength must be 1
-      nextQuoteChar += quoteCharLength
-      continue
-      }
-      if (
-      quoteChar !== escapeChar &&
-      chunk[nextQuoteChar - escapeCharLength] === escapeChar
-      ) {
-      // escapeCharLength must be 1
-      continue
-      }
-
-      addFieldToRow(
-      parseField(nextQuoteChar).replaceAll(escapedQuoteChar, quoteChar)
-      )
-
-      cursor = nextQuoteChar + quoteCharLength
-      nextDelimiterChar = findNext(delimiterChar)
-      nextNewlineChar = findNext(newlineChar)
-
-      if (cursor === nextDelimiterChar) {
-      cursor += delimiterCharLength
-      nextDelimiterChar = findNext(delimiterChar)
-      } else if (cursor === nextNewlineChar) {
-      endOfLine()
-      }
-      //     else if (chunk[cursor] === ' ') {
-      //          err = ['QuotedFieldMalformed', 'Quoted field contains excess space between closing quote and delimiter/newline']
-      //          const nextStop = Math.min(...[nextDelimiterChar, nextNewlineChar].filter(v => (-1 < v)))
-      //          const spaceText = parseField(nextStop)
-      //          cursor += (spaceText.trim() === '') ? spaceText.length + delimiterCharLength : 0
-      //          nextDelimiterChar = findNext(delimiterChar)
-      //        }
-      break
-      }
-      continue
-      } */
-
-      // ...,...\n
-      if (nextDelimiterChar > -1 && nextDelimiterChar < nextNewlineChar) {
-        addFieldToRow(parseField(nextDelimiterChar))
-        cursor = nextDelimiterChar + delimiterCharLength
-        nextDelimiterChar = findNext(delimiterChar)
-        continue
-      }
-
-      if (nextNewlineChar < 0) {
-        break
-      }
-
-      if (
-        commentPrefixValue &&
-        parseField(cursor + commentPrefixValueLength) === commentPrefixValue
-      ) {
-        idx += 1
-        if (errorOnComment) {
-          enqueueError('CommentExists', 'Comment detected.')
-        }
-        cursor = nextNewlineChar + newlineCharLength
-        nextDelimiterChar = findNext(delimiterChar)
-        nextNewlineChar = findNext(newlineChar)
-        continue
-      }
-
-      addFieldToRow(parseField(nextNewlineChar))
-      endOfLine()
-    }
-
-    if (endOfFile && length(row)) {
-      nextNewlineChar = chunkLength
-      endOfLine()
-    }
-  }
-
   return {
     fastParse,
     slowParse,
-    testParse,
     header: () => header,
     previousChunk: () => partialLine
   }
@@ -392,9 +268,11 @@ export const parse = (opts = {}) => {
 export default (input, opts) => {
   const options = {
     ...defaultOptions,
-    enableReturn: true,
-    chunkSize: 64 * 1024 * 1024,
-    enqueue: () => {},
+    ...{
+      enableReturn: true,
+      chunkSize: 64 * 1024 * 1024,
+      enqueue: () => {}
+    },
     ...opts
   }
   const { chunkSize, enableReturn, enqueue } = options
@@ -412,7 +290,8 @@ export default (input, opts) => {
 
   let position = 0
   while (position < input.length) {
-    const chunk = previousChunk() + input.slice(position, position + chunkSize)
+    const chunk =
+      previousChunk() + input.substring(position, position + chunkSize)
 
     // Checking if you can use fastParse slows it down more than checking for quoteChar on ever field.
     slowParse(chunk, controller)
@@ -420,7 +299,7 @@ export default (input, opts) => {
   }
   // flush
   const chunk = previousChunk()
-  slowParse(chunk, controller)
+  slowParse(chunk, controller, true)
 
   return enableReturn && res
 }
