@@ -68,35 +68,42 @@ const csv = format(linesArray, {})
 ## Options
 
 ### Common
+- `newlineChar` (`\r\n`): What `newline` character(s) to be used.
+- `delimiterChar` (`,`): Characters used to separate fields. Must be length of 1
+- `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them. Must be length of 1
+- `escapeChar` (`${quoteChar}`): Character used to escape the `quoteChar`. Must be length of 1
+
+### Parse
 - `header` (`true`): Keys to be used in JSON object for the parsed row
   - `true`: First row of the `input` is the headers and will need to be pulled out
   - `[...]`: Pre-assign headers because `input` contains no headers.
   - `false`: Don't map to JSON, return array of values instead.
-- `newlineChar` (`\r\n`): What `newline` character(s) to be used.
-- `delimiterChar` (`,`): Characters used to separate fields. Must be length of 1
-- `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them. Must be length of 1
-- `escapeChar` (`quoteChar`): Character used to escape the `quoteChar`. Must be length of 1
-
-### Parse
 - `enqueue` (`({data, idx, err}) => {}`): Function to run on parsed row data.
-- `chunkSize` (`10MB`): Size of chunks to process at once. Should be greater than the size of the 3 largest lines.
-- `emptyFieldValue` (`<empty string>`): Value to be used instead of an empty string. Can be set to `undefined` to have empty fields not be included.
+- `emptyFieldValue` (``): Value to be used instead of an empty string. Can be set to `undefined` to have empty fields not be included.
 - `coerceField` (`(field) => field`): Function to apply type/value coercion.
 - `commentPrefixValue` (false): Lines starting with this value will be ignored (i.e. `#`, `//`). Can be set to `false` if files will never have comments.
 - `errorOnEmptyLine` (`true`): When an empty line is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnComment` (`true`): When a comment is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnFieldsMismatch` (`true`): When number of headers does not match the number of fields in a row. Push row with error when occurs, row ignored otherwise.
 - `errorOnFieldMalformed` (`true`): When no closing `quoteChar` is found. Throws parsing error.
+- `chunkSize` (`64MB`): Size of chunks to process at once.
+- `enableReturn` (`true`): Will concat rows into a single array. Set to `false` if handing data within enqueue for performance inprovements.
 
 ### Format
-- `quoteColumn`: (`undefined`): Array that maps to the headers to indicate what columns need to have quotes.
+- `header` (`true`): Keys to be used in JSON object for the parsed row
+  - `true`: Will create header from `Object.keys()`
+  - `[...]`: Pre-assign headers to be included from object.
+  - `false`: will not include a header line. Will use `Object.values()` for rows
+- `quoteColumn`: (`undefined`): Array that maps to the headers to indicate what columns need to have quotes. Used to improve performance.
   - `true`: Always quote column
   - `false`: Never quote column
   - `undefined`/`null`/``: Detect if quotes are needed based on contents 
+- `enqueue` (`(string) => {}`): Function to run on formatted row data.
+- `enableReturn` (`true`): Will concat rows into a single string. Set to `false` if handing data within enqueue for performance inprovements.
 
 
 ## Examples
-### Basic parsing of a string to JSON
+### Parsing a CSV formatted string to JSON (`[{...},{...},...]`)
 ```javascript
 import { parse } from 'csv-rex'
 
