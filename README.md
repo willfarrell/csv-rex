@@ -247,7 +247,7 @@ export const csvParseStream = (opts) => {
       if (canUseFastMode(chunk)) {
         fastParse(chunk, {enqueue})
       } else {
-        slowParse(chunk, {enqueue})
+        slowParse(chunk, {enqueue}, true)
       }
       callback()
     }
