@@ -38,9 +38,8 @@
 - Small bundle size (~1KB compressed)
 - Zero dependencies
 - ESM & CJS modules with `.map` files
-- NodeJS and WebStream API support via @datastream/csv
-- Tested up to 10M rows
-
+- NodeJS and WebStream API support via [@datastream/csv](https://github.com/willfarrell/datastream)
+- Parses >300,000 rows/sec (with 10 columns)
 
 ## Why not use `papaparse` or `csv-parse`?
 Both are great libraries, we've use them both in many projects over the years. 
@@ -48,7 +47,7 @@ Both are great libraries, we've use them both in many projects over the years.
 - [`csv-parse`](https://csv.js.org/parse/): Built on top of NodeJS native APIs giving it great stream support. If you want to run it in the browser however, you've going to have to ship a very large polyfill.
 - [`papaparse`](https://www.papaparse.com/): Built to be more friendly for browser with an option to run in node as well. Faster than `csv-parse`, but, it's dadbod and lack of native stream support leaves room for improvement.
 
-The goal with `csv-rex` was to have a csv parser that is as fast as others, reduce bundle size, and have cross-environment stream support. We think we've achieved our goal and hope you enjoy.
+The goal with `csv-rex` is to have a csv parser and formater that is as fast as others, reduce bundle size, and have cross-environment stream support. We think we've achieved our goal and hope you enjoy.
 
 ## Setup
 
@@ -87,7 +86,7 @@ const csv = format(linesArray, {})
 - `errorOnFieldsMismatch` (`true`): When number of headers does not match the number of fields in a row. Push row with error when occurs, row ignored otherwise.
 - `errorOnFieldMalformed` (`true`): When no closing `quoteChar` is found. Throws parsing error.
 - `chunkSize` (`64MB`): Size of chunks to process at once.
-- `enableReturn` (`true`): Will concat rows into a single array. Set to `false` if handing data within enqueue for performance inprovements.
+- `enableReturn` (`true`): Will concat rows into a single array. Set to `false` if handing data within enqueue for performance improvements.
 
 ### Format
 - `header` (`true`): Keys to be used in JSON object for the parsed row
@@ -99,7 +98,7 @@ const csv = format(linesArray, {})
   - `false`: Never quote column
   - `undefined`/`null`/``: Detect if quotes are needed based on contents 
 - `enqueue` (`(string) => {}`): Function to run on formatted row data.
-- `enableReturn` (`true`): Will concat rows into a single string. Set to `false` if handing data within enqueue for performance inprovements.
+- `enableReturn` (`true`): Will concat rows into a single string. Set to `false` if handing data within enqueue for performance improvements.
 
 
 ## Examples
@@ -107,19 +106,58 @@ const csv = format(linesArray, {})
 ```javascript
 import { parse } from 'csv-rex'
 
-const enqueue = ({data, idx, err}) => {
+const enqueue = ({idx, data, err}) => {
   if (err) {
     // handler err
     return
   }
-  // modify or handle data
+  // modify and/or handle data
 }
 
 export default (csvString) => parse(csvString, { enqueue })
 ```
 
-## WebWorker using a file
-To prevent blocking of the main thread it is recommended that csv parsing is done in a WebWorker, SharedWebWorker, or ServiceWorker instead of the main thread.
+### NodeJS Stream
+```javascript
+import { createReadStream } from 'node:fs'
+import { pipeline } from '@datastream/core'
+import { csvParseStream } from '@datastream/csv'
+
+export default async (filePath, opts = {}) => {
+  const streams = [
+    createReadStream(filePath),
+    csvParseStream()
+    // ...
+  ]
+  
+  const result = await pipeline(streams)
+  console.log(result.csvErrors)
+}
+```
+
+### Web Stream API
+Requires: Chrome v71 , Edge v79, Firefox ([not supported yet](https://bugzilla.mozilla.org/show_bug.cgi?id=1493537)), Safari v14.5, NodeJS v18 (v16 with import). If you want to use WebStreams with node you need to pass `--conditions=webstream` in the cli to force it's use.
+
+```javascript
+import { pipeline } from '@datastream/core'
+import { stringReadableStream } from '@datastream/string'
+import { csvParseStream } from '@datastream/csv'
+
+export default async (blob, opts = {}) => {
+  const streams = [
+    stringReadableStream(blob),
+    csvParseStream()
+    // ...
+  ]
+  
+  const result = await pipeline(streams)
+  console.log(result.csvErrors)
+}
+
+```
+
+### WebWorker using a file
+To prevent blocking of the main thread it is recommended that csv parsing is done in a WebWorker, SharedWebWorker, or ServiceWorker instead of the main thread. This example doesn't use streams due to the lack of Firefox stream support mentioned above.
 
 ```javascript
 /* eslint-env worker */
@@ -149,124 +187,10 @@ const postMessageEncode = (str) => {
 }
 ```
 
-
-### Web Stream API
-Requires: Chrome v71 , Edge v79, Firefox ([not supported yet](https://bugzilla.mozilla.org/show_bug.cgi?id=1493537)), Safari v14.5, NodeJS v18 (v16 with import)
-
-```javascript
-import parse from 'csv-rex/parse'
-
-export default async (blob, opts = {}) => {
-  const textDecodeStream = new TextDecoderStream(opts.encoding)
-  const writeStream = new WritableStream({
-    async write ({data, idx, err}) {
-      if (err) {
-        // handler err
-        return
-      }   
-      // handle data
-    }
-  })
-  
-  return blob.stream()
-    .pipeThrough(textDecodeStream)
-    .pipeThrough(csvParseStream(opts))
-    .pipeTo(writeStream)
-    
-}
-
-export const csvParseStream = (opts) => {
-  const { canUseFastMode, fastParse, slowParse, previousChunk } = parse(opts)
-
-  return new TransformStream({
-    transform (chunk, controller) {
-      chunk = previousChunk() + chunk
-
-      if (canUseFastMode(chunk)) {
-        fastParse(chunk, controller)
-      } else {
-        slowParse(chunk, controller)
-      }
-    },
-    flush (controller) {
-      const chunk = previousChunk()
-      if (canUseFastMode(chunk)) {
-        fastParse(chunk, controller)
-      } else {
-        slowParse(chunk, controller)
-      }
-      controller.terminate()
-    }
-  })
-}
-
-```
-
-
-### NodeJS Stream
-```javascript
-import { createReadStream } from 'node:fs'
-import { Transform, Writable } from 'node:stream'
-import parse from 'csv-rex/parse'
-
-export default async (filePath, opts = {}) => {
-  const readStream = createReadStream(filePath)
-  const rows
-  const writeStream = new Writable({
-    async write ({data, idx, err}) {
-      if (err) {
-        // handler err
-        return
-      }   
-      // handle data
-      rows.push(data)
-    }
-  })
-  
-  await readStream
-    //.pipe(textDecodeStream) // TODO
-    .pipe(csvParseStream(opts))
-    .pipe(writeStream)
-  return rows
-    
-}
-
-export const csvParseStream = (opts) => {
-  const { canUseFastMode, fastParse, slowParse, previousChunk } = parse(opts)
-
-  return new Transform({
-    decodeStrings: false,
-    readableObjectMode: true,
-    transform (chunk, encoding, callback) {
-      const enqueue = (data) => this.push(data)
-      chunk = previousChunk() + chunk
-
-      if (canUseFastMode(chunk)) {
-        fastParse(chunk, {enqueue})
-      } else {
-        slowParse(chunk, {enqueue})
-      }
-      callback()
-    },
-    flush (callback) {
-      const enqueue = (data) => this.push(data)
-      const chunk = previousChunk()
-      if (canUseFastMode(chunk)) {
-        fastParse(chunk, {enqueue})
-      } else {
-        slowParse(chunk, {enqueue}, true)
-      }
-      callback()
-    }
-  })
-}
-
-```
-
 ## Roadmap
 - [ ] Improve documentation
-- [ ] Publish `@datastream/csv` and update examples
 - [ ] Automate and publish benchmarks
 - [ ] option functionality
+  - cast fields template
   - validate options
   - autodetect options (newline/delimiter)

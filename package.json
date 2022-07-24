@@ -1,18 +1,12 @@
 {
   "name": "csv-rex",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A tiny and fast CSV parser for JavaScript.",
   "type": "module",
   "files": [
-    "index.mjs",
-    "index.mjs.map",
-    "index.cjs",
-    "parse.mjs",
-    "parse.mjs.map",
-    "parse.cjs",
-    "format.mjs",
-    "format.mjs.map",
-    "format.cjs"
+    "*.mjs",
+    "*.cjs",
+    "*.map"
   ],
   "main": "index.mjs",
   "exports": {

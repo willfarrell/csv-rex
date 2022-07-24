@@ -3,8 +3,8 @@ import { equal, deepEqual } from 'node:assert'
 import sinon from 'sinon'
 import csvParse, { parse } from './parse.js'
 
-const allMethods = ['fastParse', 'slowParse'] // , 'testParse']
-const quoteMethods = ['slowParse'] // , 'testParse']
+const allMethods = ['chunkParse'] // , 'testParse']
+const quoteMethods = ['chunkParse'] // , 'testParse']
 
 test('Should parse csv string using mjs', async (t) => {
   const options = {
@@ -134,7 +134,7 @@ for (const method of allMethods) {
     const chunk = generateCSV({
       columns: 10,
       rows: 1_000_000,
-      quotes: method === 'slowParse'
+      quotes: method === 'chunkParse'
     })
     csvParse(chunk, options)
     equal(enqueue.callCount, 1_000_000)
@@ -492,7 +492,7 @@ for (const method of allMethods) {
       {
         err: {
           code: 'FieldsMismatchTooFew',
-          message: 'Too few fields were parsed, 2, expected 3.'
+          message: 'Too few fields were parsed, expected 3.'
         },
         idx: 2
       }
@@ -501,7 +501,7 @@ for (const method of allMethods) {
       {
         err: {
           code: 'FieldsMismatchTooMany',
-          message: 'Too many fields were parsed, 4, expected 3.'
+          message: 'Too many fields were parsed, expected 3.'
         },
         idx: 3
       }

@@ -1,26 +1,30 @@
-const defaultOptions = {
+export const defaultOptions = {
   header: true, // false: return array; true: detect headers and return json; [...]: use defined headers and return json
-  newlineChar: '\n', // undefined: detect newline from file; '\r\n': Windows; '\n': Linux/Mac
+  newlineChar: '\r\n', // undefined: detect newline from file; '\r\n': Windows; '\n': Linux/Mac
   delimiterChar: ',', // TODO add in auto detect or function
-  quoteChar: '"',
-  escapeChar: '"'
+  quoteChar: '"'
+  // escapeChar: '"'
 
   // quoteColumn: undefined
 }
 
 export const format = (input, opts = {}) => {
   const options = { ...defaultOptions, enqueue: () => {}, ...opts }
+  options.escapeChar ??= options.quoteChar
   const { enableReturn, enqueue } = options
 
+  const isArrayData = Array.isArray(input[0])
+  const format = isArrayData ? formatArray : formatObject
+
   const includeHeader = options.header !== false
-  if (typeof options.header === 'boolean') {
+  if (typeof options.header === 'boolean' && !isArrayData) {
     options.header = Object.keys(input[0])
   }
 
-  let res = includeHeader ? formatHeader(options) : ''
+  let res = includeHeader ? formatArray(options.header, options) : ''
 
   for (let i = 0, l = input.length; i < l; i++) {
-    const data = formatRow(input[i], options)
+    const data = format(input[i], options)
     enqueue(data)
     if (enableReturn) {
       res += data
@@ -30,17 +34,15 @@ export const format = (input, opts = {}) => {
   return enableReturn && res
 }
 
-export const formatHeader = (options) => {
+export const formatArray = (arr, options) => {
   let csv = ''
-  for (let i = 0, l = options.header.length; i < l; i++) {
-    csv +=
-      (i ? options.delimiterChar : '') +
-      formatField(options.header[i], null, options)
+  for (let i = 0, l = arr.length; i < l; i++) {
+    csv += (i ? options.delimiterChar : '') + formatField(arr[i], null, options)
   }
   return csv + options.newlineChar
 }
 
-export const formatRow = (data, options) => {
+export const formatObject = (data, options) => {
   let csv = ''
   for (let i = 0, l = options.header.length; i < l; i++) {
     csv +=

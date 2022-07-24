@@ -1,6 +1,6 @@
 import test from 'node:test'
 import { equal } from 'node:assert'
-import { format, formatHeader, formatRow, formatField } from './format.js'
+import { format, formatArray, formatObject, formatField } from './format.js'
 
 const defaultOptions = {
   escapeChar: '"',
@@ -39,27 +39,30 @@ test('Should format array of objects w/ header === false', async (t) => {
 
 // *** formatHeader() *** //
 test('Should format header', async (t) => {
-  const field = formatHeader({ ...defaultOptions, header: ['b', 'a'] })
+  const field = formatArray(['b', 'a'], {
+    ...defaultOptions,
+    header: ['b', 'a']
+  })
   equal(field, 'b,a/n')
 })
 
 // *** formatRow() *** //
 test('Should format row', async (t) => {
-  const field = formatRow(
+  const field = formatObject(
     { a: '1', b: '2' },
     { ...defaultOptions, header: ['b', 'a'] }
   )
   equal(field, '2,1/n')
 })
 test('Should format row w/ quotes', async (t) => {
-  const field = formatRow(
+  const field = formatObject(
     { a: '1', b: '2' },
     { ...defaultOptions, header: ['b', 'a'], quoteColumn: [true, true] }
   )
   equal(field, '"2","1"/n')
 })
 test('Should format row w/o quotes', async (t) => {
-  const field = formatRow(
+  const field = formatObject(
     { a: '1', b: '2' },
     { ...defaultOptions, header: ['b', 'a'], quoteColumn: [false, false] }
   )

@@ -78,12 +78,12 @@ export const parse = (opts = {}) => {
           if (headerLength < rowLength) {
             enqueueError(
               'FieldsMismatchTooMany',
-              `Too many fields were parsed, ${rowLength}, expected ${headerLength}.`
+              `Too many fields were parsed, expected ${headerLength}.`
             )
           } else if (rowLength < headerLength) {
             enqueueError(
               'FieldsMismatchTooFew',
-              `Too few fields were parsed, ${rowLength}, expected ${headerLength}.`
+              `Too few fields were parsed, expected ${headerLength}.`
             )
           }
         }
@@ -117,7 +117,7 @@ export const parse = (opts = {}) => {
   }
 
   // Fast Parse
-  const fastParse = (string, controller) => {
+  /* const fastParse = (string, controller) => {
     chunk = string
     chunkLength = length(chunk)
     enqueue = controller.enqueue
@@ -145,9 +145,8 @@ export const parse = (opts = {}) => {
       }
       enqueueRow(line.split(delimiterChar).map(transformField))
     }
-  }
+  } */
 
-  // Slow Parse
   const checkForEmptyLine = () => {
     if (findNext(newlineChar) === cursor) {
       idx += 1
@@ -166,7 +165,7 @@ export const parse = (opts = {}) => {
     }
   }
 
-  const slowParse = (string, controller, flush = false) => {
+  const chunkParse = (string, controller, flush = false) => {
     chunk = string
     chunkLength = length(chunk)
     enqueue = controller.enqueue
@@ -174,7 +173,7 @@ export const parse = (opts = {}) => {
     cursor = 0
     row = []
 
-    // TODO add in tests, update defaults, replice to fastParse
+    // TODO add in tests, update defaults, replace to fastParse
     // auto-detect newlineChar
     //  if (!newlineChar) {
     //    const match = newlineCharRegExp.exec(chunk)
@@ -273,11 +272,37 @@ export const parse = (opts = {}) => {
   }
 
   return {
-    fastParse,
-    slowParse,
+    chunkParse,
     header: () => header,
     previousChunk: () => partialLine
   }
+}
+
+export const cast = {
+  string: (field) => field,
+  boolean: (field) => {
+    const boolean = cast.true(field)
+    return typeof boolean === 'boolean' ? boolean : cast.false(field)
+  },
+  integer: (field) => Number.parseInt(field, 10),
+  decimal: (field) => Number.parseFloat(field),
+  json: (field) => {
+    try {
+      return JSON.parse(field)
+    } catch (e) {
+      return field
+    }
+  },
+  timestamp: (field) => {
+    try {
+      return new Date(field)
+    } catch (e) {
+      return field
+    }
+  },
+  true: (field) => (field.toLowerCase() === 'true' ? true : field),
+  false: (field) => (field.toLowerCase() === 'false' ? false : field),
+  null: (field) => (field.toLowerCase() === 'null' ? null : field)
 }
 
 export default (input, opts) => {
@@ -291,7 +316,7 @@ export default (input, opts) => {
     ...opts
   }
   const { chunkSize, enableReturn, enqueue } = options
-  const { slowParse, previousChunk } = parse(options)
+  const { chunkParse, previousChunk } = parse(options)
 
   const res = []
   const controller = { enqueue }
@@ -309,12 +334,12 @@ export default (input, opts) => {
       previousChunk() + input.substring(position, position + chunkSize)
 
     // Checking if you can use fastParse slows it down more than checking for quoteChar on ever field.
-    slowParse(chunk, controller)
+    chunkParse(chunk, controller)
     position += chunkSize
   }
   // flush
   const chunk = previousChunk()
-  slowParse(chunk, controller, true)
+  chunkParse(chunk, controller, true)
 
   return enableReturn && res
 }
