@@ -47,7 +47,7 @@ Both are great libraries, we've use them both in many projects over the years.
 - [`csv-parse`](https://csv.js.org/parse/): Built on top of NodeJS native APIs giving it great stream support. If you want to run it in the browser however, you've going to have to ship a very large polyfill.
 - [`papaparse`](https://www.papaparse.com/): Built to be more friendly for browser with an option to run in node as well. Faster than `csv-parse`, but, it's dadbod and lack of native stream support leaves room for improvement.
 
-The goal with `csv-rex` is to have a csv parser and formater that is as fast as others, reduce bundle size, and have cross-environment stream support. We think we've achieved our goal and hope you enjoy.
+The goal with `csv-rex` is to have a csv parser and formater that is as fast as others, reduced bundle size, and have cross-environment stream support. We think we've achieved our goal and hope you enjoy.
 
 ## Setup
 
