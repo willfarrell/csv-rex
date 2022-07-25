@@ -35,11 +35,11 @@
 ## Features
 - Free to use under MIT licence
 - Comma-Separated Values (CSV) Files specification compliant ([RFC-4180](https://tools.ietf.org/html/rfc4180))
-- Small bundle size (~1KB compressed)
+- Small bundle size (~1KB compressed = esbuild + minify + br)
 - Zero dependencies
 - ESM & CJS modules with `.map` files
 - NodeJS and WebStream API support via [@datastream/csv](https://github.com/willfarrell/datastream)
-- Parses >300,000 rows/sec (with 10 columns)
+- Parses >250,000 rows/sec (with 10 columns on GitHub Actions). See the [benchmarks](https://github.com/willfarrell/csv-benchmarks).
 
 ## Why not use `papaparse` or `csv-parse`?
 Both are great libraries, we've use them both in many projects over the years. 
