@@ -68,6 +68,7 @@
   "devDependencies": {
     "@commitlint/cli": "^17.0.0",
     "@commitlint/config-conventional": "^17.0.0",
+    "benny": "3.7.1",
     "c8": "^7.11.0",
     "esbuild": "^0.14.47",
     "husky": "^8.0.0",
