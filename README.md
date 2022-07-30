@@ -39,7 +39,7 @@
 - Zero dependencies
 - ESM & CJS modules with `.map` files
 - NodeJS and WebStream API support via [@datastream/csv](https://github.com/willfarrell/datastream)
-- Parses >250,000 rows/sec (with 10 columns on GitHub Actions). See the [benchmarks](https://github.com/willfarrell/csv-benchmarks).
+- It's just fast. See the [benchmarks](https://github.com/willfarrell/csv-benchmarks).
 
 ## Why not use `papaparse` or `csv-parse`?
 Both are great libraries, we've use them both in many projects over the years. 
@@ -119,6 +119,13 @@ const enqueue = ({idx, data, err}) => {
 export default (csvString) => parse(csvString, { enqueue })
 ```
 
+### Formatting an array of objects to CSV string
+```javascript
+import { format } from 'csv-rex'
+
+export default (arrayOrObjects) => parse(arrayOrObjects, { newlineChar: '\n' })
+```
+
 ### NodeJS Stream
 ```javascript
 import { createReadStream } from 'node:fs'
@@ -188,11 +195,3 @@ const postMessageEncode = (str) => {
   postMessage(buffer, [buffer])
 }
 ```
-
-## Roadmap
-- [ ] Improve documentation
-- [ ] Automate and publish benchmarks
-- [ ] option functionality
-  - cast fields template
-  - validate options
-  - autodetect options (newline/delimiter)
