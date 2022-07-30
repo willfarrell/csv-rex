@@ -2,7 +2,7 @@
 const defaultOptions = {
   header: true, // false: return array; true: detect headers and return json; [...]: use defined headers and return json
   newlineChar: '\r\n', // undefined: detect newline from file; '\r\n': Windows; '\n': Linux/Mac
-  delimiterChar: ',',
+  delimiterChar: '',
   quoteChar: '"',
   // escapeChar: '"', // default: `quoteChar`
 
@@ -26,9 +26,8 @@ export const parse = (opts = {}) => {
   let { header } = options
   let headerLength = length(header)
 
+  let { newlineChar, delimiterChar } = options
   const {
-    newlineChar,
-    delimiterChar,
     quoteChar,
     escapeChar,
     commentPrefixValue,
@@ -39,8 +38,8 @@ export const parse = (opts = {}) => {
     errorOnFieldsMismatch
     // errorOnFieldMalformed
   } = options
-  // const delimiterCharRegExp = /,|\t|\||;|\x1E|\x1F/g
-  // const newlineCharRegExp = /\r\n|\n|\r/g
+  const delimiterCharRegExp = /,|\t|\||;|\x1E|\x1F/g // eslint-disable-line no-control-regex
+  const newlineCharRegExp = /\r\n|\n|\r/g
 
   const escapedQuoteChar = escapeChar + quoteChar
   const escapedQuoteCharRegExp = new RegExp(
@@ -51,7 +50,7 @@ export const parse = (opts = {}) => {
   const escapedQuoteEqual = escapeChar === quoteChar
   const escapedQuoteNotEqual = escapeChar !== quoteChar
 
-  const newlineCharLength = length(newlineChar)
+  let newlineCharLength = length(newlineChar)
   const delimiterCharLength = 1 // length(delimiterChar)
   const quoteCharLength = 1 // length(quoteChar)
   const escapeCharLength = 1 // length(escapeChar)
@@ -109,43 +108,17 @@ export const parse = (opts = {}) => {
   const parseField = (end) => {
     return chunk.substring(cursor, end)
   }
-  const transformField = (field) => {
-    return coerceField(field || emptyFieldValue)
-  }
-  const addFieldToRow = (field) => {
-    row.push(transformField(field))
+  const transformField = (field, idx) => {
+    return coerceField(field || emptyFieldValue, idx)
   }
 
-  // Fast Parse
-  /* const fastParse = (string, controller) => {
-    chunk = string
-    chunkLength = length(chunk)
-    enqueue = controller.enqueue
-    const lines = chunk.split(newlineChar)
-    let linesLength = length(lines)
-    if (linesLength > 1) {
-      partialLine = lines.pop()
-      linesLength -= 1
-    }
-    for (const line of lines) {
-      if (commentPrefixValue && line.indexOf(commentPrefixValue) === 0) {
-        idx += 1
-        if (errorOnComment) {
-          enqueueError('CommentExists', 'Comment detected.')
-        }
-        continue
-      }
-      if (!line) {
-        idx += 1
-        // `linesLength > 1` to ignore end of file `\n`
-        if (errorOnEmptyLine && linesLength > 1) {
-          enqueueError('EmptyLineExists', 'Empty line detected.')
-        }
-        continue
-      }
-      enqueueRow(line.split(delimiterChar).map(transformField))
-    }
-  } */
+  // TODO idea: when header == true/array using a different addFieldToRow function to allow faster key:value mapping
+  // const resetRow = () => {
+  //   row = []
+  // }
+  const addFieldToRow = (field, idx) => {
+    row.push(transformField(field, idx))
+  }
 
   const checkForEmptyLine = () => {
     if (findNext(newlineChar) === cursor) {
@@ -165,25 +138,35 @@ export const parse = (opts = {}) => {
     }
   }
 
+  const detectChar = (chunk, pattern) => {
+    let match
+    const chars = {}
+    while ((match = pattern.exec(chunk))) {
+      const char = match[0]
+      chars[char] ??= 0
+      chars[char] += 1
+      if (chars[char] > 5) return char
+    }
+    // pattern.lastIndex = 0 // not reused again
+    const { key } = Object.keys(chars)
+      .map((key) => ({ key, value: chars[key] }))
+      .sort((a, b) => a.value - b.value)[0]
+    return key
+  }
   const chunkParse = (string, controller, flush = false) => {
     chunk = string
     chunkLength = length(chunk)
     enqueue = controller.enqueue
     partialLine = ''
     cursor = 0
-    row = []
+    row = [] // resetRow()
 
-    // TODO add in tests, update defaults, replace to fastParse
-    // auto-detect newlineChar
-    //  if (!newlineChar) {
-    //    const match = newlineCharRegExp.exec(chunk)
-    //    newlineChar = match[0]
-    //  }
-    // auto-detect delimitryChar
-    //  if (!delimiterChar) {
-    //    const match = delimiterCharRegExp.exec(chunk)
-    //    delimiterChar = match[0]
-    //  }
+    // auto-detect
+    if (!newlineChar) {
+      newlineChar = detectChar(chunk.substring(0, 1024), newlineCharRegExp)
+      newlineCharLength = length(newlineChar)
+    }
+    delimiterChar ||= detectChar(chunk.substring(0, 1024), delimiterCharRegExp)
 
     checkForEmptyLine()
     let lineStart = 0
@@ -255,13 +238,13 @@ export const parse = (opts = {}) => {
       } else {
         field = parseField(nextCursor)
       }
-      addFieldToRow(field)
+      addFieldToRow(field, row.length)
 
       cursor = nextCursor + nextCursorLength
 
       if (atNewline) {
         enqueueRow(row)
-        row = []
+        row = [] // resetRow()
         checkForEmptyLine()
         lineStart = cursor
       }
@@ -278,14 +261,14 @@ export const parse = (opts = {}) => {
   }
 }
 
-export const cast = {
+export const coerceTo = {
   string: (field) => field,
   boolean: (field) => {
-    const boolean = cast.true(field)
-    return typeof boolean === 'boolean' ? boolean : cast.false(field)
+    const boolean = coerceTo.true(field)
+    return typeof boolean === 'boolean' ? boolean : coerceTo.false(field)
   },
-  integer: (field) => Number.parseInt(field, 10),
-  decimal: (field) => Number.parseFloat(field),
+  integer: (field) => Number.parseInt(field, 10) || field,
+  decimal: (field) => Number.parseFloat(field) || field,
   json: (field) => {
     try {
       return JSON.parse(field)
@@ -294,11 +277,8 @@ export const cast = {
     }
   },
   timestamp: (field) => {
-    try {
-      return new Date(field)
-    } catch (e) {
-      return field
-    }
+    const date = new Date(field)
+    return date.toString() !== 'Invalid Date' ? date : field
   },
   true: (field) => (field.toLowerCase() === 'true' ? true : field),
   false: (field) => (field.toLowerCase() === 'false' ? false : field),

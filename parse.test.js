@@ -1,7 +1,7 @@
 import test from 'node:test'
 import { equal, deepEqual } from 'node:assert'
 import sinon from 'sinon'
-import csvParse, { parse } from './parse.js'
+import csvParse, { parse, coerceTo } from './parse.js'
 
 const allMethods = ['chunkParse'] // , 'testParse']
 const quoteMethods = ['chunkParse'] // , 'testParse']
@@ -86,26 +86,6 @@ for (const method of allMethods) {
 }
 
 // *** Chunking *** //
-/* const generateCSV = ({ columns, rows, quotes }) => {
-  const wrapper = quotes ? '"' : ''
-  const delimiter = quotes ? '","' : ','
-  let csv =
-    wrapper +
-    Array.from({ length: columns + 1 }, (_, x) => `col${x}`).join(delimiter) +
-    wrapper +
-    '\r\n'
-  for (let y = 0; y < rows; y++) {
-    csv +=
-      wrapper +
-      Array.from({ length: columns + 1 }, (_, x) => `${x}x${y}`).join(
-        delimiter
-      ) +
-      wrapper +
-      '\r\n'
-  }
-  return csv
-} */
-
 for (const method of allMethods) {
   test(`${method}: Should parse with chunking`, async (t) => {
     const options = {}
@@ -127,18 +107,6 @@ for (const method of allMethods) {
       { data: { a: '4', b: '5', c: '6' }, idx: 3 }
     ])
   })
-
-  /* test(`${method}: Should parse large csv with chunking`, async (t) => {
-    const enqueue = sinon.spy()
-    const options = { enqueue, chunkSize: 1 * 1024 * 1024 }
-    const chunk = generateCSV({
-      columns: 10,
-      rows: 1_000_000,
-      quotes: method === 'chunkParse'
-    })
-    csvParse(chunk, options)
-    equal(enqueue.callCount, 1_000_000)
-  }) */
 }
 
 for (const method of quoteMethods) {
@@ -160,31 +128,6 @@ for (const method of quoteMethods) {
     ])
     deepEqual(enqueue.secondCall.args, [
       { data: { a: '4', b: '5', c: '6' }, idx: 3 }
-    ])
-  })
-}
-
-// *** Option: newline *** //
-for (const method of allMethods) {
-  test(`${method}: Should parse with { newlineChar: "\\n" }`, async (t) => {
-    const options = { newlineChar: '\n' }
-    const enqueue = sinon.spy()
-    const chunk = 'a,b,c\n1,2,3\n'
-    const parser = parse(options)
-    parser[method](chunk, { enqueue })
-    deepEqual(enqueue.firstCall.args, [
-      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
-    ])
-  })
-
-  test(`${method}: Should parse with { newlineChar: "\\r\\n" }`, async (t) => {
-    const options = { newlineChar: '\r\n' }
-    const enqueue = sinon.spy()
-    const chunk = 'a,b,c\r\n1,2,3\r\n'
-    const parser = parse(options)
-    parser[method](chunk, { enqueue })
-    deepEqual(enqueue.firstCall.args, [
-      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
     ])
   })
 }
@@ -226,8 +169,65 @@ for (const method of allMethods) {
   })
 }
 
+// *** Option: newline *** //
+for (const method of allMethods) {
+  test(`${method}: Should parse with { newlineChar: "" }`, async (t) => {
+    const options = { newlineChar: '' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r1,2,3\r'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+  })
+
+  test(`${method}: Should parse with { newlineChar: "\\r\\n" }`, async (t) => {
+    const options = { newlineChar: '\r\n' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n1,2,3\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+  })
+  test(`${method}: Should parse with { newlineChar: "\\n" }`, async (t) => {
+    const options = { newlineChar: '\n' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\n1,2,3\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+  })
+}
+
 // *** Option: delimiter *** //
 for (const method of allMethods) {
+  test(`${method}: Should parse with { delimiterValue: "" }`, async (t) => {
+    const options = { delimiterChar: '' }
+    const enqueue = sinon.spy()
+    const chunk = 'a\x1Fb\x1Fc\r\n1\x1F2\x1F3\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    equal(enqueue.callCount, 1)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+  })
+  test(`${method}: Should parse with { delimiterValue: "," }`, async (t) => {
+    const options = { delimiterChar: ',' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n1,2,3\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    equal(enqueue.callCount, 1)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+  })
   test(`${method}: Should parse with { delimiterValue: "|" }`, async (t) => {
     const options = { delimiterChar: '|' }
     const enqueue = sinon.spy()
@@ -249,76 +249,6 @@ for (const method of allMethods) {
     equal(enqueue.callCount, 1)
     deepEqual(enqueue.firstCall.args, [
       { data: { a: '1', b: '2', c: '3' }, idx: 2 }
-    ])
-  })
-}
-
-// *** empty fields *** //
-for (const method of allMethods) {
-  test(`${method}: Should parse with { emptyFieldValue: "" }`, async (t) => {
-    const options = { emptyFieldValue: '' }
-    const enqueue = sinon.spy()
-    const chunk = 'a,b,c\r\n,,\r\n'
-    const parser = parse(options)
-    parser[method](chunk, { enqueue })
-    equal(enqueue.callCount, 1)
-    deepEqual(enqueue.firstCall.args, [
-      { data: { a: '', b: '', c: '' }, idx: 2 }
-    ])
-  })
-  test(`${method}: Should parse with { emptyFieldValue: null }`, async (t) => {
-    const options = { emptyFieldValue: null }
-    const enqueue = sinon.spy()
-    const chunk = 'a,b,c\r\n,,\r\n'
-    const parser = parse(options)
-    parser[method](chunk, { enqueue })
-    equal(enqueue.callCount, 1)
-    deepEqual(enqueue.firstCall.args, [
-      { data: { a: null, b: null, c: null }, idx: 2 }
-    ])
-  })
-  test(`${method}: Should parse with { emptyFieldValue: undefined }`, async (t) => {
-    const options = { emptyFieldValue: undefined }
-    const enqueue = sinon.spy()
-    const chunk = 'a,b,c\r\n,,\r\n'
-    const parser = parse(options)
-    parser[method](chunk, { enqueue })
-    equal(enqueue.callCount, 1)
-    deepEqual(enqueue.firstCall.args, [
-      { data: { a: undefined, b: undefined, c: undefined }, idx: 2 }
-    ])
-  })
-  test(`${method}: Should parse with { emptyFieldValue: "" } and first field`, async (t) => {
-    const options = { emptyFieldValue: '' }
-    const enqueue = sinon.spy()
-    const chunk = 'a,b,c\r\n1,,\r\n'
-    const parser = parse(options)
-    parser[method](chunk, { enqueue })
-    equal(enqueue.callCount, 1)
-    deepEqual(enqueue.firstCall.args, [
-      { data: { a: '1', b: '', c: '' }, idx: 2 }
-    ])
-  })
-  test(`${method}: Should parse with { emptyFieldValue: "" } and middle field`, async (t) => {
-    const options = { emptyFieldValue: '' }
-    const enqueue = sinon.spy()
-    const chunk = 'a,b,c\r\n,2,\r\n'
-    const parser = parse(options)
-    parser[method](chunk, { enqueue })
-    equal(enqueue.callCount, 1)
-    deepEqual(enqueue.firstCall.args, [
-      { data: { a: '', b: '2', c: '' }, idx: 2 }
-    ])
-  })
-  test(`${method}: Should parse with { emptyFieldValue: "" } and last field`, async (t) => {
-    const options = { emptyFieldValue: '' }
-    const enqueue = sinon.spy()
-    const chunk = 'a,b,c\r\n,,3\r\n'
-    const parser = parse(options)
-    parser[method](chunk, { enqueue })
-    equal(enqueue.callCount, 1)
-    deepEqual(enqueue.firstCall.args, [
-      { data: { a: '', b: '', c: '3' }, idx: 2 }
     ])
   })
 }
@@ -392,6 +322,106 @@ for (const method of quoteMethods) {
     parser[method](chunk, { enqueue })
     deepEqual(enqueue.firstCall.args, [
       { data: { a: '1', 'b,b': '2,2', c: '3' }, idx: 2 }
+    ])
+  })
+}
+
+// *** coerceFields *** //
+for (const method of quoteMethods) {
+  test(`${method}: Should parse with { coerceField: (field) => ... }`, async (t) => {
+    const coerceField = (field, idx) => Object.values(coerceTo)[idx](field)
+    const options = { quoteChar: '\'', coerceField }
+    const enqueue = sinon.spy()
+    const chunk = 'string,boolean,integer,decimal,json,timestamp,_true,_false,_null\r\nstring,true,-1,-1.1,\'{"a":"b"}\',2022-07-30T04:46:24.466Z,true,false,null\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    deepEqual(enqueue.firstCall.args, [
+      {
+        data: {
+          boolean: true,
+          decimal: -1.1,
+          _false: false,
+          integer: -1,
+          json: {
+            a: 'b'
+          },
+          _null: null,
+          string: 'string',
+          timestamp: new Date('2022-07-30T04:46:24.466Z'),
+          _true: true
+        },
+        idx: 2
+      }
+    ])
+  })
+}
+
+// *** empty fields *** //
+for (const method of allMethods) {
+  test(`${method}: Should parse with { emptyFieldValue: "" }`, async (t) => {
+    const options = { emptyFieldValue: '' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n,,\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    equal(enqueue.callCount, 1)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '', b: '', c: '' }, idx: 2 }
+    ])
+  })
+  test(`${method}: Should parse with { emptyFieldValue: null }`, async (t) => {
+    const options = { emptyFieldValue: null }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n,,\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    equal(enqueue.callCount, 1)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: null, b: null, c: null }, idx: 2 }
+    ])
+  })
+  test(`${method}: Should parse with { emptyFieldValue: undefined }`, async (t) => {
+    const options = { emptyFieldValue: undefined }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n,,\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    equal(enqueue.callCount, 1)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: undefined, b: undefined, c: undefined }, idx: 2 }
+    ])
+  })
+  test(`${method}: Should parse with { emptyFieldValue: "" } and first field`, async (t) => {
+    const options = { emptyFieldValue: '' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n1,,\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    equal(enqueue.callCount, 1)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '', c: '' }, idx: 2 }
+    ])
+  })
+  test(`${method}: Should parse with { emptyFieldValue: "" } and middle field`, async (t) => {
+    const options = { emptyFieldValue: '' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n,2,\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    equal(enqueue.callCount, 1)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '', b: '2', c: '' }, idx: 2 }
+    ])
+  })
+  test(`${method}: Should parse with { emptyFieldValue: "" } and last field`, async (t) => {
+    const options = { emptyFieldValue: '' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n,,3\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    equal(enqueue.callCount, 1)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '', b: '', c: '3' }, idx: 2 }
     ])
   })
 }

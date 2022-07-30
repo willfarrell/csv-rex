@@ -66,21 +66,19 @@ const csv = format(linesArray, {})
 
 ## Options
 
-### Common
-- `newlineChar` (`\r\n`): What `newline` character(s) to be used.
-- `delimiterChar` (`,`): Characters used to separate fields. Must be length of 1
-- `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them. Must be length of 1
-- `escapeChar` (`${quoteChar}`): Character used to escape the `quoteChar`. Must be length of 1
-
 ### Parse
 - `header` (`true`): Keys to be used in JSON object for the parsed row
   - `true`: First row of the `input` is the headers and will need to be pulled out
   - `[...]`: Pre-assign headers because `input` contains no headers.
   - `false`: Don't map to JSON, return array of values instead.
+- `newlineChar` (`''`): What `newline` character(s) to be used. By default will guess from `\r\n`, `\n`, `\r`
+- `delimiterChar` (`''`): Characters used to separate fields. Must be length of 1.  By default will guess from `,`, `\t`, `|`, `;`, `\x1E`, `\x1F`
+- `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them. Must be length of 1
+- `escapeChar` (`${quoteChar}`): Character used to escape the `quoteChar`. Must be length of 1
 - `enqueue` (`({data, idx, err}) => {}`): Function to run on parsed row data.
-- `emptyFieldValue` (``): Value to be used instead of an empty string. Can be set to `undefined` to have empty fields not be included.
-- `coerceField` (`(field) => field`): Function to apply type/value coercion.
-- `commentPrefixValue` (false): Lines starting with this value will be ignored (i.e. `#`, `//`). Can be set to `false` if files will never have comments.
+- `emptyFieldValue` (`''`): Value to be used instead of an empty string. Can be set to `undefined` to have empty fields not be included.
+- `coerceField` (`(field, idx) => field`): Function to apply type/value coercion.
+- `commentPrefixValue` (`false`): Lines starting with this value will be ignored (i.e. `#`, `//`). Can be set to `false` if files will never have comments.
 - `errorOnEmptyLine` (`true`): When an empty line is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnComment` (`true`): When a comment is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnFieldsMismatch` (`true`): When number of headers does not match the number of fields in a row. Push row with error when occurs, row ignored otherwise.
@@ -93,6 +91,10 @@ const csv = format(linesArray, {})
   - `true`: Will create header from `Object.keys()`
   - `[...]`: Pre-assign headers to be included from object.
   - `false`: will not include a header line. Will use `Object.values()` for rows
+- `newlineChar` (`\r\n`): What `newline` character(s) to be used.
+- `delimiterChar` (`,`): Characters used to separate fields.
+- `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them.
+- `escapeChar` (`${quoteChar}`): Character used to escape the `quoteChar`.
 - `quoteColumn`: (`undefined`): Array that maps to the headers to indicate what columns need to have quotes. Used to improve performance.
   - `true`: Always quote column
   - `false`: Never quote column
