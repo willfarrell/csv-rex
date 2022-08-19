@@ -330,9 +330,10 @@ for (const method of quoteMethods) {
 for (const method of quoteMethods) {
   test(`${method}: Should parse with { coerceField: (field) => ... }`, async (t) => {
     const coerceField = (field, idx) => Object.values(coerceTo)[idx](field)
-    const options = { quoteChar: '\'', coerceField }
+    const options = { quoteChar: "'", coerceField }
     const enqueue = sinon.spy()
-    const chunk = 'string,boolean,integer,decimal,json,timestamp,_true,_false,_null\r\nstring,true,-1,-1.1,\'{"a":"b"}\',2022-07-30T04:46:24.466Z,true,false,null\r\n'
+    const chunk =
+      'string,boolean,integer,decimal,json,timestamp,_true,_false,_null\r\nstring,true,-1,-1.1,\'{"a":"b"}\',2022-07-30T04:46:24.466Z,true,false,null\r\n'
     const parser = parse(options)
     parser[method](chunk, { enqueue })
     deepEqual(enqueue.firstCall.args, [

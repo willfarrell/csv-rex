@@ -23,10 +23,7 @@ export const parse = (opts = {}) => {
   const options = { ...defaultOptions, ...opts }
   options.escapeChar ??= options.quoteChar
 
-  let { header } = options
-  let headerLength = length(header)
-
-  let { newlineChar, delimiterChar } = options
+  let { header, newlineChar, delimiterChar } = options
   const {
     quoteChar,
     escapeChar,
@@ -38,8 +35,9 @@ export const parse = (opts = {}) => {
     errorOnFieldsMismatch
     // errorOnFieldMalformed
   } = options
-  const delimiterCharRegExp = /,|\t|\||;|\x1E|\x1F/g // eslint-disable-line no-control-regex
-  const newlineCharRegExp = /\r\n|\n|\r/g
+  let headerLength = length(header)
+  const detectDelimiterCharRegExp = /,|\t|\||;|\x1E|\x1F/g // eslint-disable-line no-control-regex
+  const detectNewlineCharRegExp = /\r\n|\n|\r/g
 
   const escapedQuoteChar = escapeChar + quoteChar
   const escapedQuoteCharRegExp = new RegExp(
@@ -138,21 +136,6 @@ export const parse = (opts = {}) => {
     }
   }
 
-  const detectChar = (chunk, pattern) => {
-    let match
-    const chars = {}
-    while ((match = pattern.exec(chunk))) {
-      const char = match[0]
-      chars[char] ??= 0
-      chars[char] += 1
-      if (chars[char] > 5) return char
-    }
-    // pattern.lastIndex = 0 // not reused again
-    const { key } = Object.keys(chars)
-      .map((key) => ({ key, value: chars[key] }))
-      .sort((a, b) => a.value - b.value)[0]
-    return key
-  }
   const chunkParse = (string, controller, flush = false) => {
     chunk = string
     chunkLength = length(chunk)
@@ -163,10 +146,16 @@ export const parse = (opts = {}) => {
 
     // auto-detect
     if (!newlineChar) {
-      newlineChar = detectChar(chunk.substring(0, 1024), newlineCharRegExp)
+      newlineChar = detectChar(
+        chunk.substring(0, 1024),
+        detectNewlineCharRegExp
+      )
       newlineCharLength = length(newlineChar)
     }
-    delimiterChar ||= detectChar(chunk.substring(0, 1024), delimiterCharRegExp)
+    delimiterChar ||= detectChar(
+      chunk.substring(0, 1024),
+      detectDelimiterCharRegExp
+    )
 
     checkForEmptyLine()
     let lineStart = 0
@@ -259,6 +248,24 @@ export const parse = (opts = {}) => {
     header: () => header,
     previousChunk: () => partialLine
   }
+}
+
+export const detectChar = (chunk, pattern) => {
+  let match
+  const chars = {}
+  while ((match = pattern.exec(chunk))) {
+    const char = match[0]
+    console.log({ char, chars })
+    chars[char] ??= 0
+    chars[char] += 1
+    if (chars[char] > 5) return char
+  }
+  // pattern.lastIndex = 0 // not reused again
+  console.log(pattern, chars, chunk)
+  const { key } = Object.keys(chars)
+    .map((key) => ({ key, value: chars[key] }))
+    .sort((a, b) => a.value - b.value)[0]
+  return key
 }
 
 export const coerceTo = {
