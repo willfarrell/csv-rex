@@ -261,7 +261,6 @@ export const detectChar = (chunk, pattern) => {
     if (chars[char] > 5) return char
   }
   // pattern.lastIndex = 0 // not reused again
-  console.log(pattern, chars, chunk)
   const { key } = Object.keys(chars)
     .map((key) => ({ key, value: chars[key] }))
     .sort((a, b) => a.value - b.value)[0]
