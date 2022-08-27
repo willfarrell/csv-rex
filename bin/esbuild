@@ -1,10 +1,12 @@
 #!/usr/bin/env sh
 
-node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs index.js           --minify                      --allow-overwrite --outfile=index.cjs
-node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs parse.js  --bundle --minify                      --allow-overwrite --outfile=parse.cjs
-node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs format.js --bundle --minify                      --allow-overwrite --outfile=format.cjs
+node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs index.js                --minify                      --allow-overwrite --outfile=index.cjs
+node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs parse.js       --bundle --minify                      --allow-overwrite --outfile=parse.cjs
+node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs parse-mini.js  --bundle --minify                      --allow-overwrite --outfile=parse-mini.cjs
+node_modules/.bin/esbuild --platform=node --target=node14 --format=cjs format.js      --bundle --minify                      --allow-overwrite --outfile=format.cjs
 
-node_modules/.bin/esbuild --platform=node                 --format=esm index.js           --minify --sourcemap=external --allow-overwrite --outfile=index.mjs
-node_modules/.bin/esbuild --platform=node                 --format=esm parse.js  --bundle --minify --sourcemap=external --allow-overwrite --outfile=parse.mjs
-node_modules/.bin/esbuild --platform=node                 --format=esm format.js --bundle --minify --sourcemap=external --allow-overwrite --outfile=format.mjs
+node_modules/.bin/esbuild --platform=node                 --format=esm index.js                --minify --sourcemap=external --allow-overwrite --outfile=index.mjs
+node_modules/.bin/esbuild --platform=node                 --format=esm parse.js       --bundle --minify --sourcemap=external --allow-overwrite --outfile=parse.mjs
+node_modules/.bin/esbuild --platform=node                 --format=esm parse-mini.js  --bundle --minify --sourcemap=external --allow-overwrite --outfile=parse-mini.mjs
+node_modules/.bin/esbuild --platform=node                 --format=esm format.js      --bundle --minify --sourcemap=external --allow-overwrite --outfile=format.mjs
 

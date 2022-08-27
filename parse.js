@@ -255,7 +255,6 @@ export const detectChar = (chunk, pattern) => {
   const chars = {}
   while ((match = pattern.exec(chunk))) {
     const char = match[0]
-    console.log({ char, chars })
     chars[char] ??= 0
     chars[char] += 1
     if (chars[char] > 5) return char

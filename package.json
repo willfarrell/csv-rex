@@ -1,6 +1,6 @@
 {
   "name": "csv-rex",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A tiny and fast CSV parser for JavaScript.",
   "type": "module",
   "files": [
@@ -26,6 +26,14 @@
         "default": "./parse.cjs"
       }
     },
+    "./parse-mini": {
+      "import": {
+        "default": "./parse-mini.mjs"
+      },
+      "require": {
+        "default": "./parse-mini.cjs"
+      }
+    },
     "./format": {
       "import": {
         "default": "./format.mjs"
@@ -41,7 +49,8 @@
     "pre-commit": "lint-staged",
     "lint": "prettier --write *.{js,json} && standard --fix *.js",
     "test": "c8 node --test",
-    "build": "./bin/esbuild"
+    "build": "./bin/esbuild",
+    "bench": "npm run build && node parse.bench.js"
   },
   "repository": {
     "type": "git",
