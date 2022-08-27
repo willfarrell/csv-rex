@@ -1,8 +1,8 @@
 // chunkSize >> largest expected row
 const defaultOptions = {
   header: true, // false: return array; true: detect headers and return json; [...]: use defined headers and return json
-  newlineChar: '\r\n', // undefined: detect newline from file; '\r\n': Windows; '\n': Linux/Mac
-  delimiterChar: '',
+  newlineChar: '', // '': detect newline from chunk; '\r\n': Windows; '\n': Linux/Mac
+  delimiterChar: '', // '': detect delimiter from chunk
   quoteChar: '"',
   // escapeChar: '"', // default: `quoteChar`
 
