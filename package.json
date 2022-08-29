@@ -1,6 +1,6 @@
 {
   "name": "csv-rex",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A tiny and fast CSV parser for JavaScript.",
   "type": "module",
   "files": [
@@ -72,7 +72,7 @@
   },
   "homepage": "https://github.com/willfarrell/csv-rex#readme",
   "dependencies": {
-    "csv-rex": "file:./"
+    "csv-rex": "0.4.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.0",
