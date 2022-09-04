@@ -1,0 +1,17 @@
+- Getting started
+  - [Setup](/)
+- Parse
+  - [Options](/docs/parse.md)
+  - [Basic Example](/docs/parse.md#start)
+  - [Fast Mode Example](/docs/parse.md#start)
+  - [Stream Example](/docs/parse.md)
+  - [WebWorker Example](/docs/parse.md)
+- Format
+  - [Options](/docs/format.md)
+  - [Basic Example](/docs/format.md)
+  - [NodeJS Stream Example](/docs/parse.md#nodestream)
+  - [Web Stream API Example](/docs/parse.md#webstream)
+  - [WebWorker Example](/docs/parse.md#browser)
+- Migrate
+  - [papaparse](/docs/migrate/papaparse.md)
+  - [csv](/docs/migrate/csv.md)
