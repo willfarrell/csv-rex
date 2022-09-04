@@ -1,12 +1,12 @@
 - Getting started
   - [Setup](/)
-- Parse
+- [Parse](/docs/parse.md)
   - [Options](/docs/parse.md)
   - [Basic Example](/docs/parse.md#start)
   - [Fast Mode Example](/docs/parse.md#start)
   - [Stream Example](/docs/parse.md)
   - [WebWorker Example](/docs/parse.md)
-- Format
+- [Format](/docs/format.md)
   - [Options](/docs/format.md)
   - [Basic Example](/docs/format.md)
   - [NodeJS Stream Example](/docs/parse.md#nodestream)
