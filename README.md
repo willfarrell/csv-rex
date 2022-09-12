@@ -30,6 +30,6 @@
   </a>
 </p>
 <p>
-See full documentation at <a href="https://willfarrell.github.io/csv-rex">https://willfarrell.github.io/csv-rex</a>
+See full documentation at <a href="https://csv-rex.js.org">https://csv-rex.js.org</a>
 </p>
 </div>
