@@ -43,7 +43,7 @@
 
 ## Why not use `papaparse` or `csv-parse`?
 
-Both are great libraries, we've use them both in many projects over the years.
+Both are great libraries, we've used them both in many projects over the years.
 
 - [`csv-parse`](https://csv.js.org/parse/): Built on top of NodeJS native APIs giving it great stream support. If you want to run it in the browser however, you've going to have to ship a very large polyfill.
 - [`papaparse`](https://www.papaparse.com/): Built to be more friendly for browser with an option to run in node as well. Faster than `csv-parse`, but, it's dadbod and lack of native stream support leaves room for improvement.
