@@ -3,9 +3,9 @@
 ## Options
 
 - `header` (`true`): Keys to be used in JSON object for the parsed row
-  - `true`: Will create header from `Object.keys()`
-  - `[...]`: Pre-assign headers to be included from object.
-  - `false`: will not include a header line. Will use `Object.values()` for rows
+  - `true`: Will include header
+  - `false`: Will exclude a header line.
+- `columns` (`undefined`): What columns to included and in what order, default to using `Object.values()` for columns
 - `newlineChar` (`\r\n`): What `newline` character(s) to be used.
 - `delimiterChar` (`,`): Characters used to separate fields.
 - `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them.

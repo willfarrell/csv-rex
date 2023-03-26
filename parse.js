@@ -1,6 +1,9 @@
 // chunkSize >> largest expected row
 const defaultOptions = {
   header: true, // false: return array; true: detect headers and return json; [...]: use defined headers and return json
+  // TODO add in columns
+  // TODO add in output format array/object
+  // output: 'array', // 'array' / 'object'
   newlineChar: '', // '': detect newline from chunk; '\r\n': Windows; '\n': Linux/Mac
   delimiterChar: '', // '': detect delimiter from chunk
   quoteChar: '"',
@@ -8,6 +11,7 @@ const defaultOptions = {
 
   // Parse
   emptyFieldValue: '',
+  // TODO option to remove empty fields from object
   coerceField: (field) => field, // TODO tests
   commentPrefixValue: false, // falsy: disable, '//': enabled
   errorOnComment: true,
@@ -260,9 +264,18 @@ export const detectChar = (chunk, pattern) => {
     if (chars[char] > 5) return char
   }
   // pattern.lastIndex = 0 // not reused again
-  const { key } = Object.keys(chars)
-    .map((key) => ({ key, value: chars[key] }))
-    .sort((a, b) => a.value - b.value)[0]
+  const { key } =
+    Object.keys(chars)
+      .map((key) => ({ key, value: chars[key] }))
+      .sort((a, b) => a.value - b.value)?.[0] ?? {}
+  if (!key) {
+    throw new Error('UnknownDetectChar', {
+      cause: {
+        pattern,
+        chunk
+      }
+    })
+  }
   return key
 }
 
@@ -271,6 +284,12 @@ export const coerceTo = {
   boolean: (field) => {
     const boolean = coerceTo.true(field)
     return typeof boolean === 'boolean' ? boolean : coerceTo.false(field)
+  },
+  true: (field) => (field.toLowerCase() === 'true' ? true : field),
+  false: (field) => (field.toLowerCase() === 'false' ? false : field),
+  number: (field) => {
+    const decimal = coerceTo.decimal(field)
+    return Number.isInteger(decimal) ? coerceTo.integer(field) : decimal
   },
   integer: (field) => Number.parseInt(field, 10) || field,
   decimal: (field) => Number.parseFloat(field) || field,
@@ -285,9 +304,11 @@ export const coerceTo = {
     const date = new Date(field)
     return date.toString() !== 'Invalid Date' ? date : field
   },
-  true: (field) => (field.toLowerCase() === 'true' ? true : field),
-  false: (field) => (field.toLowerCase() === 'false' ? false : field),
-  null: (field) => (field.toLowerCase() === 'null' ? null : field)
+  null: (field) => (field.toLowerCase() === 'null' ? null : field),
+  any: (field) => {
+    // TODO
+    return field
+  }
 }
 
 export default (input, opts) => {

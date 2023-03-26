@@ -1,6 +1,6 @@
 {
   "name": "csv-rex",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "A tiny and fast CSV parser for JavaScript.",
   "type": "module",
   "files": [
@@ -87,5 +87,9 @@
     "prettier": "^2.0.0",
     "sinon": "^14.0.0",
     "standard": "17.0.0"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/willfarrell"
   }
 }

@@ -1,5 +1,6 @@
 export const defaultOptions = {
-  header: true, // false: return array; true: detect headers and return json; [...]: use defined headers and return json
+  header: true, // false: don't log out header; true: log out header
+  // columns: undefined, // [] to set order of headers and allowed columns
   newlineChar: '\r\n', // undefined: detect newline from file; '\r\n': Windows; '\n': Linux/Mac
   delimiterChar: ',', // TODO add in auto detect or function
   quoteChar: '"'
@@ -17,11 +18,9 @@ export const format = (input, opts = {}) => {
   const format = isArrayData ? formatArray : formatObject
 
   const includeHeader = options.header !== false
-  if (typeof options.header === 'boolean' && !isArrayData) {
-    options.header = Object.keys(input[0])
-  }
+  options.columns ??= Object.keys(input[0])
 
-  let res = includeHeader ? formatArray(options.header, options) : ''
+  let res = includeHeader ? formatArray(options.columns, options) : ''
 
   for (let i = 0, l = input.length; i < l; i++) {
     const data = format(input[i], options)
@@ -44,10 +43,10 @@ export const formatArray = (arr, options) => {
 
 export const formatObject = (data, options) => {
   let csv = ''
-  for (let i = 0, l = options.header.length; i < l; i++) {
+  for (let i = 0, l = options.columns.length; i < l; i++) {
     csv +=
       (i ? options.delimiterChar : '') +
-      formatField(data[options.header[i]], options.quoteColumn?.[i], options)
+      formatField(data[options.columns[i]], options.quoteColumn?.[i], options)
   }
   return csv + options.newlineChar
 }

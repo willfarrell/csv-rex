@@ -329,11 +329,13 @@ for (const method of quoteMethods) {
 // *** coerceFields *** //
 for (const method of quoteMethods) {
   test(`${method}: Should parse with { coerceField: (field) => ... }`, async (t) => {
-    const coerceField = (field, idx) => Object.values(coerceTo)[idx](field)
-    const options = { quoteChar: "'", coerceField }
+    const coerceField = (field, idx) => {
+      return Object.values(coerceTo)[idx](field)
+    }
+    const options = { header: true, quoteChar: "'", coerceField }
     const enqueue = sinon.spy()
     const chunk =
-      'string,boolean,integer,decimal,json,timestamp,_true,_false,_null\r\nstring,true,-1,-1.1,\'{"a":"b"}\',2022-07-30T04:46:24.466Z,true,false,null\r\n'
+      'string,boolean,true,false,number,integer,decimal,json,timestamp,null\r\nstring,true,true,false,0,-1,-1.1,\'{"a":"b"}\',2022-07-30T04:46:24.466Z,null\r\n'
     const parser = parse(options)
     parser[method](chunk, { enqueue })
     deepEqual(enqueue.firstCall.args, [
@@ -341,15 +343,16 @@ for (const method of quoteMethods) {
         data: {
           boolean: true,
           decimal: -1.1,
-          _false: false,
+          false: false,
+          number: 0,
           integer: -1,
           json: {
             a: 'b'
           },
-          _null: null,
+          null: null,
           string: 'string',
           timestamp: new Date('2022-07-30T04:46:24.466Z'),
-          _true: true
+          true: true
         },
         idx: 2
       }

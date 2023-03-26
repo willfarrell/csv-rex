@@ -3,6 +3,7 @@ import { equal } from 'node:assert'
 import { format, formatArray, formatObject, formatField } from './format.js'
 
 const defaultOptions = {
+  header: true,
   escapeChar: '"',
   quoteChar: '"',
   delimiterChar: ',',
@@ -13,13 +14,6 @@ const defaultOptions = {
 }
 
 // *** format() *** //
-test('Should format array of objects w/ header == [...]', async (t) => {
-  const field = format([{ a: '1', b: '2' }], {
-    ...defaultOptions,
-    header: ['b', 'a']
-  })
-  equal(field, 'b,a/n2,1/n')
-})
 
 test('Should format array of objects w/ header == true', async (t) => {
   const field = format([{ a: '1', b: '2' }], {
@@ -27,6 +21,15 @@ test('Should format array of objects w/ header == true', async (t) => {
     header: true
   })
   equal(field, 'a,b/n1,2/n')
+})
+
+test('Should format array of objects w/ header == true & columns == [...]', async (t) => {
+  const field = format([{ a: '1', b: '2' }], {
+    ...defaultOptions,
+    header: true,
+    columns: ['b', 'a']
+  })
+  equal(field, 'b,a/n2,1/n')
 })
 
 test('Should format array of objects w/ header === false', async (t) => {
@@ -50,21 +53,21 @@ test('Should format header', async (t) => {
 test('Should format row', async (t) => {
   const field = formatObject(
     { a: '1', b: '2' },
-    { ...defaultOptions, header: ['b', 'a'] }
+    { ...defaultOptions, columns: ['b', 'a'] }
   )
   equal(field, '2,1/n')
 })
 test('Should format row w/ quotes', async (t) => {
   const field = formatObject(
     { a: '1', b: '2' },
-    { ...defaultOptions, header: ['b', 'a'], quoteColumn: [true, true] }
+    { ...defaultOptions, columns: ['b', 'a'], quoteColumn: [true, true] }
   )
   equal(field, '"2","1"/n')
 })
 test('Should format row w/o quotes', async (t) => {
   const field = formatObject(
     { a: '1', b: '2' },
-    { ...defaultOptions, header: ['b', 'a'], quoteColumn: [false, false] }
+    { ...defaultOptions, columns: ['b', 'a'], quoteColumn: [false, false] }
   )
   equal(field, '2,1/n')
 })
