@@ -36,6 +36,66 @@ test('Should parse csv string', async (t) => {
   equal(options.enqueue.callCount, 2)
 })
 
+test('Should parse csv string with empty first column', async (t) => {
+  const options = {
+    enqueue: sinon.spy(),
+    delimiterChar: ','
+  }
+  const input = 'a,b,c,d\r\n1,2,3,4\r\n,5,6,7\r\n,10,11,12\r\n'
+  const res = csvParse(input, options)
+  deepEqual(res, [
+    { a: '1', b: '2', c: '3', d: '4' },
+    { a: '', b: '5', c: '6', d: '7' },
+    { a: '', b: '10', c: '11', d: '12' }
+  ])
+  equal(options.enqueue.callCount, 3)
+})
+
+test('Should parse csv string with empty last column', async (t) => {
+  const options = {
+    enqueue: sinon.spy(),
+    delimiterChar: ','
+  }
+  const input = 'a,b,c,d\r\n1,2,3,4\r\n4,5,6,\r\n9,10,11,\r\n'
+  const res = csvParse(input, options)
+  deepEqual(res, [
+    { a: '1', b: '2', c: '3', d: '4' },
+    { a: '4', b: '5', c: '6', d: '' },
+    { a: '9', b: '10', c: '11', d: '' }
+  ])
+  equal(options.enqueue.callCount, 3)
+})
+
+test('Should parse csv string with empty first and last columns', async (t) => {
+  const options = {
+    enqueue: sinon.spy(),
+    delimiterChar: ','
+  }
+  const input = 'a,b,c,d\r\n1,2,3,4\r\n,5,6,\r\n,10,11,\r\n'
+  const res = csvParse(input, options)
+  deepEqual(res, [
+    { a: '1', b: '2', c: '3', d: '4' },
+    { a: '', b: '5', c: '6', d: '' },
+    { a: '', b: '10', c: '11', d: '' }
+  ])
+  equal(options.enqueue.callCount, 3)
+})
+
+test('Should parse csv string with empty last followed by empty first column', async (t) => {
+  const options = {
+    enqueue: sinon.spy(),
+    delimiterChar: ','
+  }
+  const input = 'a,b,c,d\r\n1,2,3,4\r\n4,5,6,\r\n,10,11,12\r\n'
+  const res = csvParse(input, options)
+  deepEqual(res, [
+    { a: '1', b: '2', c: '3', d: '4' },
+    { a: '4', b: '5', c: '6', d: '' },
+    { a: '', b: '10', c: '11', d: '12' }
+  ])
+  equal(options.enqueue.callCount, 3)
+})
+
 test('Should parse csv string w/ quotes', async (t) => {
   const options = {
     enqueue: sinon.spy(),
