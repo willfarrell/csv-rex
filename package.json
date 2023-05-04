@@ -1,6 +1,6 @@
 {
   "name": "csv-rex",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A tiny and fast CSV parser for JavaScript.",
   "type": "module",
   "files": [

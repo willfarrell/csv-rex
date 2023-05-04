@@ -241,7 +241,8 @@ export const parse = (opts = {}) => {
         checkForEmptyLine()
         lineStart = cursor
       }
-      if (chunkLength <= cursor) {
+      // `row.length === 0` required for when a csv ends with just `,` and no newline
+      if (chunkLength <= cursor && row.length === 0) {
         break
       }
     }

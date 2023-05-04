@@ -262,6 +262,34 @@ for (const method of allMethods) {
       { data: { a: '1', b: '2', c: '3' }, idx: 2 }
     ])
   })
+  test(`${method}: Should parse when no newline at end of file`, async (t) => {
+    const options = { newlineChar: '' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\n1,2,3\n1,2,3'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    parser[method](parser.previousChunk(), { enqueue }, true)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+    deepEqual(enqueue.secondCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 3 }
+    ])
+  })
+  test(`${method}: Should parse when no field and newline at end of file`, async (t) => {
+    const options = { newlineChar: '' }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\n1,2,3\n1,2,'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    parser[method](parser.previousChunk(), { enqueue }, true)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+    deepEqual(enqueue.secondCall.args, [
+      { data: { a: '1', b: '2', c: '' }, idx: 3 }
+    ])
+  })
 }
 
 // *** Option: delimiter *** //

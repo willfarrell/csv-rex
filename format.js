@@ -1,6 +1,6 @@
 export const defaultOptions = {
   header: true, // false: don't log out header; true: log out header
-  // columns: undefined, // [] to set order of headers and allowed columns
+  // columns: undefined, // [...] to set order of headers and allowed columns
   newlineChar: '\r\n', // undefined: detect newline from file; '\r\n': Windows; '\n': Linux/Mac
   delimiterChar: ',', // TODO add in auto detect or function
   quoteChar: '"'
