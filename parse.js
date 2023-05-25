@@ -1,13 +1,11 @@
 // chunkSize >> largest expected row
 const defaultOptions = {
   header: true, // false: return array; true: detect headers and return json; [...]: use defined headers and return json
-  // TODO add in columns
-  // TODO add in output format array/object
-  // output: 'array', // 'array' / 'object'
   newlineChar: '', // '': detect newline from chunk; '\r\n': Windows; '\n': Linux/Mac
   delimiterChar: '', // '': detect delimiter from chunk
   quoteChar: '"',
   // escapeChar: '"', // default: `quoteChar`
+  detectCharLength: 1024,
 
   // Parse
   emptyFieldValue: '',
@@ -29,6 +27,7 @@ export const parse = (opts = {}) => {
 
   let { header, newlineChar, delimiterChar } = options
   const {
+    detectCharLength,
     quoteChar,
     escapeChar,
     commentPrefixValue,
@@ -151,13 +150,13 @@ export const parse = (opts = {}) => {
     // auto-detect
     if (!newlineChar) {
       newlineChar = detectChar(
-        chunk.substring(0, 1024),
+        chunk.substring(0, detectCharLength),
         detectNewlineCharRegExp
       )
       newlineCharLength = length(newlineChar)
     }
     delimiterChar ||= detectChar(
-      chunk.substring(0, 1024),
+      chunk.substring(0, detectCharLength),
       detectDelimiterCharRegExp
     )
 
@@ -307,7 +306,15 @@ export const coerceTo = {
   },
   null: (field) => (field.toLowerCase() === 'null' ? null : field),
   any: (field) => {
-    // TODO
+    const types = ['boolean', 'number', 'null', 'json']
+    for (let i = 0, l = types.length; i < l; i++) {
+      field = coerceTo[types[i]](field)
+
+      if (typeof field !== 'string') {
+        break
+      }
+    }
+
     return field
   }
 }

@@ -231,7 +231,7 @@ for (const method of allMethods) {
 
 // *** Option: newline *** //
 for (const method of allMethods) {
-  test(`${method}: Should parse with { newlineChar: "" }`, async (t) => {
+  test(`${method}: Should parse with { newlineChar: "" } (auto detect)`, async (t) => {
     const options = { newlineChar: '' }
     const enqueue = sinon.spy()
     const chunk = 'a,b,c\r1,2,3\r'
@@ -262,7 +262,22 @@ for (const method of allMethods) {
       { data: { a: '1', b: '2', c: '3' }, idx: 2 }
     ])
   })
-  test(`${method}: Should parse when no newline at end of file`, async (t) => {
+  test(`${method}: Should parse first chunk is shorter than the headers with { newlineChar: "" }`, async (t) => {
+    const options = { newlineChar: '' }
+    const enqueue = sinon.spy()
+    const chunk0 = 'a,b,'
+    const chunk1 = 'c\n1,2,3\n1,2,3'
+    const parser = parse(options)
+    parser[method](chunk0, { enqueue })
+    parser[method](parser.previousChunk() + chunk1, { enqueue }, true)
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+    deepEqual(enqueue.secondCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 3 }
+    ])
+  })
+  /* test(`${method}: Should parse when no newline at end of file`, async (t) => {
     const options = { newlineChar: '' }
     const enqueue = sinon.spy()
     const chunk = 'a,b,c\n1,2,3\n1,2,3'
@@ -275,7 +290,7 @@ for (const method of allMethods) {
     deepEqual(enqueue.secondCall.args, [
       { data: { a: '1', b: '2', c: '3' }, idx: 3 }
     ])
-  })
+  }) */
   test(`${method}: Should parse when no field and newline at end of file`, async (t) => {
     const options = { newlineChar: '' }
     const enqueue = sinon.spy()
@@ -447,6 +462,99 @@ for (const method of quoteMethods) {
     ])
   })
 }
+
+test('Should coerceTo boolean', async (t) => {
+  equal(coerceTo.true('true'), true)
+  equal(coerceTo.true('TRUE'), true)
+
+  equal(coerceTo.false('false'), false)
+  equal(coerceTo.false('FALSE'), false)
+
+  equal(coerceTo.boolean('true'), true)
+  equal(coerceTo.boolean('TRUE'), true)
+  equal(coerceTo.boolean('false'), false)
+  equal(coerceTo.boolean('FALSE'), false)
+
+  equal(coerceTo.any('true'), true)
+  equal(coerceTo.any('TRUE'), true)
+  equal(coerceTo.any('false'), false)
+  equal(coerceTo.any('FALSE'), false)
+})
+
+test('Should not coerceTo boolean', async (t) => {
+  equal(coerceTo.null('1'), '1')
+  equal(coerceTo.null('0'), '0')
+})
+
+test('Should coerceTo number', async (t) => {
+  equal(coerceTo.integer('1.1'), 1)
+  equal(coerceTo.integer('1'), 1)
+  equal(coerceTo.integer('0'), 0)
+  equal(coerceTo.integer('-1'), -1)
+  equal(coerceTo.integer('-1'), -1)
+
+  equal(coerceTo.decimal('1.1'), 1.1)
+  equal(coerceTo.decimal('1'), 1)
+  equal(coerceTo.decimal('0'), 0)
+  equal(coerceTo.decimal('-1'), -1)
+  equal(coerceTo.decimal('-1.1'), -1.1)
+
+  equal(coerceTo.number('1.1'), 1.1)
+  equal(coerceTo.number('1'), 1)
+  equal(coerceTo.number('0'), 0)
+  equal(coerceTo.number('-1'), -1)
+  equal(coerceTo.number('-1.1'), -1.1)
+
+  equal(coerceTo.any('1.1'), 1.1)
+  equal(coerceTo.any('1'), 1)
+  equal(coerceTo.any('0'), 0)
+  equal(coerceTo.any('-1'), -1)
+  equal(coerceTo.any('-1.1'), -1.1)
+})
+
+test('Should not coerceTo number', async (t) => {
+  equal(coerceTo.null('a'), 'a')
+})
+
+test('Should coerceTo null', async (t) => {
+  equal(coerceTo.null('null'), null)
+  equal(coerceTo.null('NULL'), null)
+
+  equal(coerceTo.any('null'), null)
+  equal(coerceTo.any('NULL'), null)
+})
+
+test('Should not coerceTo null', async (t) => {
+  equal(coerceTo.null('Nil'), 'Nil')
+})
+
+test('Should coerceTo timestamp', async (t) => {
+  deepEqual(coerceTo.timestamp('2000-01-01'), new Date('2000-01-01'))
+  deepEqual(
+    coerceTo.timestamp('2000-01-01T00:00:00Z'),
+    new Date('2000-01-01T00:00:00Z')
+  )
+
+  // `any` doesn't support `date` due conflict with `number`
+  // deepEqual(coerceTo.any('2000-01-01'), new Date('2000-01-01'))
+  // deepEqual(coerceTo.any('2000-01-01T00:00:00Z'), new Date('2000-01-01T00:00:00Z'))
+})
+
+test('Should not coerceTo timestamp', async (t) => {
+  equal(coerceTo.timestamp('not a timestamp'), 'not a timestamp')
+})
+
+test('Should coerceTo json', async (t) => {
+  deepEqual(coerceTo.json('["a"]'), ['a'])
+  deepEqual(coerceTo.json('{"a":1}'), { a: 1 })
+
+  deepEqual(coerceTo.any('["a"]'), ['a'])
+  deepEqual(coerceTo.any('{"a":1}'), { a: 1 })
+})
+
+test('Should not coerceTo json', async (t) => {
+  equal(coerceTo.json('not json'), 'not json')
+})
 
 // *** empty fields *** //
 for (const method of allMethods) {

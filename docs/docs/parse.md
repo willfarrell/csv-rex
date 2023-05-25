@@ -1,11 +1,10 @@
 # parse
 
 ## Options
-
 - `header` (`true`): Keys to be used in JSON object for the parsed row
-  - `true`: First row of the `input` is the headers and will need to be pulled out
-  - `[...]`: Pre-assign headers because `input` contains no headers.
-  - `false`: Don't map to JSON, return array of values instead.
+  - `true`: First row of the `input` contains columns and will need to be parsed out. output object of column value pairs.
+  - `[...]`: Input doesn't contain columns, pre-assign columns and output object of column value pairs.
+  - `false`: Input doesn't contain columns, output array of values
 - `newlineChar` (`''`): What `newline` character(s) to be used. By default will guess from `\r\n`, `\n`, `\r`
 - `delimiterChar` (`''`): Characters used to separate fields. Must be length of 1. By default will guess from `,`, `\t`, `|`, `;`, `\x1E`, `\x1F`
 - `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them. Must be length of 1

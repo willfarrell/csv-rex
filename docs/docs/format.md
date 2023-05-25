@@ -3,9 +3,9 @@
 ## Options
 
 - `header` (`true`): Keys to be used in JSON object for the parsed row
-  - `true`: Will include header
+  - `true`: Will include header, will use `Object.keys()` for columns
+  - `[...]`: What columns to included and in what order
   - `false`: Will exclude a header line.
-- `columns` (`undefined`): What columns to included and in what order, default to using `Object.values()` for columns
 - `newlineChar` (`\r\n`): What `newline` character(s) to be used.
 - `delimiterChar` (`,`): Characters used to separate fields.
 - `quoteChar` (`"`): Character used to wrap fields that need to have special characters within them.
@@ -16,6 +16,13 @@
   - `undefined`/`null`/``: Detect if quotes are needed based on contents
 - `enqueue` (`(string) => {}`): Function to run on formatted row data.
 - `enableReturn` (`true`): Will concat rows into a single string. Set to `false` if handing data within enqueue for performance improvements.
+
+### Array chunk
+- `header:[...]` required
+
+### Object chunk
+
+
 
 ## Examples
 

@@ -23,17 +23,32 @@ test('Should format array of objects w/ header == true', async (t) => {
   equal(field, 'a,b/n1,2/n')
 })
 
-test('Should format array of objects w/ header == true & columns == [...]', async (t) => {
-  const field = format([{ a: '1', b: '2' }], {
+test('Should format array of objects w/ header == [...]', async (t) => {
+  const field = format([{ a: '1', b: '2', c: '3' }], {
     ...defaultOptions,
-    header: true,
-    columns: ['b', 'a']
+    header: ['b', 'a']
   })
   equal(field, 'b,a/n2,1/n')
 })
 
 test('Should format array of objects w/ header === false', async (t) => {
   const field = format([{ a: '1', b: '2' }], {
+    ...defaultOptions,
+    header: false
+  })
+  equal(field, '1,2/n')
+})
+
+test('Should format array of arrays w/ header == [...]', async (t) => {
+  const field = format([['1', '2']], {
+    ...defaultOptions,
+    header: ['a', 'b']
+  })
+  equal(field, 'a,b/n1,2/n')
+})
+
+test('Should format array of arrays w/ header === false', async (t) => {
+  const field = format([['1', '2']], {
     ...defaultOptions,
     header: false
   })
@@ -49,25 +64,31 @@ test('Should format header', async (t) => {
   equal(field, 'b,a/n')
 })
 
-// *** formatRow() *** //
-test('Should format row', async (t) => {
+// *** formatArray() *** //
+test('Should format row array', async (t) => {
+  const field = formatArray(['1', '2'], { ...defaultOptions, header: false })
+  equal(field, '1,2/n')
+})
+
+// *** formatObject() *** //
+test('Should format row object', async (t) => {
   const field = formatObject(
     { a: '1', b: '2' },
-    { ...defaultOptions, columns: ['b', 'a'] }
+    { ...defaultOptions, header: ['b', 'a'] }
   )
   equal(field, '2,1/n')
 })
-test('Should format row w/ quotes', async (t) => {
+test('Should format row object w/ quotes', async (t) => {
   const field = formatObject(
     { a: '1', b: '2' },
-    { ...defaultOptions, columns: ['b', 'a'], quoteColumn: [true, true] }
+    { ...defaultOptions, header: ['b', 'a'], quoteColumn: [true, true] }
   )
   equal(field, '"2","1"/n')
 })
-test('Should format row w/o quotes', async (t) => {
+test('Should format row object w/o quotes', async (t) => {
   const field = formatObject(
     { a: '1', b: '2' },
-    { ...defaultOptions, columns: ['b', 'a'], quoteColumn: [false, false] }
+    { ...defaultOptions, header: ['b', 'a'], quoteColumn: [false, false] }
   )
   equal(field, '2,1/n')
 })
