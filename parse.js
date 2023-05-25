@@ -153,6 +153,16 @@ export const parse = (opts = {}) => {
         chunk.substring(0, detectCharLength),
         detectNewlineCharRegExp
       )
+
+      if (!newlineChar) {
+        if (chunk.length < detectCharLength && !flush) {
+          // First chunk is too short
+          partialLine = chunk
+          return
+        } else {
+          throw new Error('newlineCharUnknown')
+        }
+      }
       newlineCharLength = length(newlineChar)
     }
     delimiterChar ||= detectChar(
@@ -269,12 +279,7 @@ export const detectChar = (chunk, pattern) => {
       .map((key) => ({ key, value: chars[key] }))
       .sort((a, b) => a.value - b.value)?.[0] ?? {}
   if (!key) {
-    throw new Error('UnknownDetectChar', {
-      cause: {
-        pattern,
-        chunk
-      }
-    })
+    return
   }
   return key
 }

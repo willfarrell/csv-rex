@@ -268,8 +268,11 @@ for (const method of allMethods) {
     const chunk0 = 'a,b,'
     const chunk1 = 'c\n1,2,3\n1,2,3'
     const parser = parse(options)
+    console.log('parser', parser.previousChunk() + chunk0)
     parser[method](chunk0, { enqueue })
+    console.log('parser', parser.previousChunk() + chunk1)
     parser[method](parser.previousChunk() + chunk1, { enqueue }, true)
+    console.log(enqueue.firstCall)
     deepEqual(enqueue.firstCall.args, [
       { data: { a: '1', b: '2', c: '3' }, idx: 2 }
     ])
@@ -277,7 +280,7 @@ for (const method of allMethods) {
       { data: { a: '1', b: '2', c: '3' }, idx: 3 }
     ])
   })
-  /* test(`${method}: Should parse when no newline at end of file`, async (t) => {
+  test(`${method}: Should parse when no newline at end of file`, async (t) => {
     const options = { newlineChar: '' }
     const enqueue = sinon.spy()
     const chunk = 'a,b,c\n1,2,3\n1,2,3'
@@ -290,7 +293,7 @@ for (const method of allMethods) {
     deepEqual(enqueue.secondCall.args, [
       { data: { a: '1', b: '2', c: '3' }, idx: 3 }
     ])
-  }) */
+  })
   test(`${method}: Should parse when no field and newline at end of file`, async (t) => {
     const options = { newlineChar: '' }
     const enqueue = sinon.spy()

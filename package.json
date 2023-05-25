@@ -1,6 +1,6 @@
 {
   "name": "csv-rex",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "A tiny and fast CSV parser for JavaScript.",
   "type": "module",
   "files": [
@@ -50,7 +50,7 @@
     "start": "docsify serve docs",
     "lint": "prettier --write *.{js,json} && standard --fix *.js",
     "test": "c8 node --test",
-    "prepublishOnly": "npm run build && npm test",
+    "prepublishOnly": "npm test && npm run build",
     "build": "./bin/esbuild",
     "bench": "npm run build && node parse.bench.js"
   },
