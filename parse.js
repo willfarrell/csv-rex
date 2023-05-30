@@ -14,7 +14,8 @@ const defaultOptions = {
   commentPrefixValue: false, // falsy: disable, '//': enabled
   errorOnComment: true,
   errorOnEmptyLine: true,
-  errorOnFieldsMismatch: true
+  errorOnExtraFields: true,
+  errorOnMissingFields: true
   // errorOnFieldMalformed: true
 }
 
@@ -35,7 +36,8 @@ export const parse = (opts = {}) => {
     coerceField,
     errorOnEmptyLine,
     errorOnComment,
-    errorOnFieldsMismatch
+    errorOnExtraFields,
+    errorOnMissingFields
     // errorOnFieldMalformed
   } = options
   let headerLength = length(header)
@@ -70,29 +72,30 @@ export const parse = (opts = {}) => {
     }
     let data = row
     if (headerLength) {
-      const rowLength = length(row)
+      let rowLength = length(row)
 
-      if (headerLength !== rowLength) {
-        if (errorOnFieldsMismatch) {
-          // enqueueError('FieldsMismatch', `Parsed ${rowLength} fields, expected ${headerLength}.`)
-          if (headerLength < rowLength) {
-            enqueueError(
-              'FieldsMismatchTooMany',
-              `Too many fields were parsed, expected ${headerLength}.`
-            )
-          } else if (rowLength < headerLength) {
-            enqueueError(
-              'FieldsMismatchTooFew',
-              `Too few fields were parsed, expected ${headerLength}.`
-            )
-          }
-        }
+      // enqueueError('FieldsMismatch', `Parsed ${rowLength} fields, expected ${headerLength}.`)
+      if (errorOnMissingFields && rowLength < headerLength) {
+        enqueueError(
+          'MissingFields',
+          `Too few fields were parsed, expected ${headerLength}.`
+        )
         return
-      } else {
-        data = {}
-        for (let i = 0; i < rowLength; i++) {
-          data[header[i]] = row[i]
+      } else if (headerLength < rowLength) {
+        if (errorOnExtraFields) {
+          enqueueError(
+            'ExtraFields',
+            `Too many fields were parsed, expected ${headerLength}.`
+          )
+          return
         }
+        // only map fields that have headers
+        rowLength = headerLength
+      }
+
+      data = {}
+      for (let i = 0; i < rowLength; i++) {
+        data[header[i]] = row[i]
       }
     }
     enqueue({ idx, data })

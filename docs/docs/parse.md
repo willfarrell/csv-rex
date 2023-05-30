@@ -1,6 +1,7 @@
 # parse
 
 ## Options
+
 - `header` (`true`): Keys to be used in JSON object for the parsed row
   - `true`: First row of the `input` contains columns and will need to be parsed out. output object of column value pairs.
   - `[...]`: Input doesn't contain columns, pre-assign columns and output object of column value pairs.
@@ -15,7 +16,8 @@
 - `commentPrefixValue` (`false`): Lines starting with this value will be ignored (i.e. `#`, `//`). Can be set to `false` if files will never have comments.
 - `errorOnEmptyLine` (`true`): When an empty line is encountered. Push row with error when occurs, row ignored otherwise.
 - `errorOnComment` (`true`): When a comment is encountered. Push row with error when occurs, row ignored otherwise.
-- `errorOnFieldsMismatch` (`true`): When number of headers does not match the number of fields in a row. Push row with error when occurs, row ignored otherwise.
+- `errorOnExtraFields` (`true`): When number of headers is less than the number of fields in a row. Push row with error when occurs, row ignored. Set to `false` to have what headers exist be mapped, and passed on.
+- `errorOnMissingFields` (`true`): When number of headers is more than the number of fields in a row. Push row with error when occurs, row ignored. Set to `false` to have what fields exist be mapped, and passed on.
 - `errorOnFieldMalformed` (`true`): When no closing `quoteChar` is found. Throws parsing error.
 - `chunkSize` (`64MB`): Size of chunks to process at once.
 - `enableReturn` (`true`): Will concat rows into a single array. Set to `false` if handing data within enqueue for performance improvements.

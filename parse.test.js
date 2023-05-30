@@ -701,8 +701,96 @@ for (const method of allMethods) {
   })
 }
 
-// *** Option: errorOnFieldsMismatch *** //
+// *** Option: errorOnMissingFields *** //
 for (const method of allMethods) {
+  test(`${method}: Should parse with { errorOnMissingFields: false }`, async (t) => {
+    const options = { errorOnMissingFields: false }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n1,2\r\n1,2,3\r\n1,2,3\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    deepEqual(enqueue.firstCall.args, [{ data: { a: '1', b: '2' }, idx: 2 }])
+    deepEqual(enqueue.secondCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 3 }
+    ])
+    deepEqual(enqueue.thirdCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 4 }
+    ])
+    equal(enqueue.callCount, 3)
+  })
+
+  test(`${method}: Should parse with { errorOnMissingFields: true }`, async (t) => {
+    const options = { errorOnMissingFields: true }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n1,2\r\n1,2,3\r\n1,2,3\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    deepEqual(enqueue.firstCall.args, [
+      {
+        err: {
+          code: 'MissingFields',
+          message: 'Too few fields were parsed, expected 3.'
+        },
+        idx: 2
+      }
+    ])
+    deepEqual(enqueue.secondCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 3 }
+    ])
+    deepEqual(enqueue.thirdCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 4 }
+    ])
+    equal(enqueue.callCount, 3)
+  })
+}
+
+// *** Option: errorOnExtraFields *** //
+for (const method of allMethods) {
+  test(`${method}: Should parse with { errorOnExtraFields: false }`, async (t) => {
+    const options = { errorOnExtraFields: false }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n1,2,3,4\r\n1,2,3\r\n1,2,3\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    deepEqual(enqueue.firstCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 2 }
+    ])
+    deepEqual(enqueue.secondCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 3 }
+    ])
+    deepEqual(enqueue.thirdCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 4 }
+    ])
+    equal(enqueue.callCount, 3)
+  })
+
+  test(`${method}: Should parse with { errorOnExtraFields: true }`, async (t) => {
+    const options = { errorOnExtraFields: true }
+    const enqueue = sinon.spy()
+    const chunk = 'a,b,c\r\n1,2,3,4\r\n1,2,3\r\n1,2,3\r\n'
+    const parser = parse(options)
+    parser[method](chunk, { enqueue })
+    deepEqual(enqueue.firstCall.args, [
+      {
+        err: {
+          code: 'ExtraFields',
+          message: 'Too many fields were parsed, expected 3.'
+        },
+        idx: 2
+      }
+    ])
+    deepEqual(enqueue.secondCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 3 }
+    ])
+    deepEqual(enqueue.thirdCall.args, [
+      { data: { a: '1', b: '2', c: '3' }, idx: 4 }
+    ])
+    equal(enqueue.callCount, 3)
+  })
+}
+
+// *** Option: errorOnFieldsMismatch *** //
+/* for (const method of allMethods) {
   test(`${method}: Should parse with { errorOnFieldsMismatch: false }`, async (t) => {
     const options = { errorOnFieldsMismatch: false }
     const enqueue = sinon.spy()
@@ -744,7 +832,7 @@ for (const method of allMethods) {
     ])
     equal(enqueue.callCount, 3)
   })
-}
+} */
 
 // *** Option: errorOnFieldMalformed *** //
 for (const method of quoteMethods) {
