@@ -74,7 +74,7 @@
   },
   "homepage": "https://github.com/willfarrell/csv-rex#readme",
   "dependencies": {
-    "csv-rex": "0.4.2"
+    "csv-rex": "0.7.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.0.0",
@@ -82,12 +82,12 @@
     "benny": "^3.7.1",
     "c8": "^7.11.0",
     "docsify-cli": "^4.4.4",
-    "esbuild": "^0.15.7",
+    "esbuild": "^0.17.0",
     "husky": "^8.0.0",
     "lint-staged": "^13.0.0",
     "prettier": "^2.0.0",
-    "sinon": "^14.0.0",
-    "standard": "17.0.0"
+    "sinon": "^15.0.0",
+    "standard": "^17.0.0"
   },
   "funding": {
     "type": "github",
